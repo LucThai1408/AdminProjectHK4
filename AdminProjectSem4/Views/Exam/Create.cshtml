@@ -1,0 +1,78 @@
+﻿@model API.Models.Exam
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Create a new classroom</h1>
+<div class="container">
+
+    <div class="btn-danger text-center">@ViewBag.Error</div>
+    <hr />
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="row">
+            <!-- Cột trái -->
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="Name" class="control-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span class="text-danger">@ViewBag.ErrorName</span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="SubjectId" class="control-label"></label>
+                    <select asp-for="SubjectId" asp-items="@ViewBag.Subject" class="form-control"></select>
+                    <span asp-validation-for="SubjectId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="RoomId" class="control-label"></label>
+                    <select asp-for="RoomId" asp-items="@ViewBag.Room" class="form-control"></select>
+                    <span asp-validation-for="RoomId" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="AccountId" class="control-label"></label>
+                    <select asp-for="AccountId" asp-items="@ViewBag.Account" class="form-control"></select>
+                    <span asp-validation-for="AccountId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- Cột phải -->
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="ExamDay" class="control-label"></label>
+                    <input asp-for="ExamDay" type="date" class="form-control" />
+                    <span class="text-danger">@ViewBag.ExamDay</span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="ExamTime" class="control-label"></label>
+                    <input asp-for="ExamTime" type="time" class="form-control" />
+                    <span class="text-danger">@ViewBag.ExamTime</span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Fee" class="control-label"></label>
+                    <input asp-for="Fee" type="number" min="1" class="form-control" />
+                    <span class="text-danger">@ViewBag.Fee</span>
+                </div>
+                <div class="form-group form-check p-0">
+                    
+                    <label class="mr-5">Status:</label>
+                    <input class="form-check-input" asp-for="Status" checked /> Active
+                </div> 
+            </div>
+        </div>
+
+        <!-- Nút hành động -->
+        <div class="form-group mt-3">
+            <input type="submit" value="Create" class="btn btn-primary" />
+            <a asp-action="Index" class="btn btn-secondary ml-2">Back to List</a>
+        </div>
+    </form>
+
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</div>

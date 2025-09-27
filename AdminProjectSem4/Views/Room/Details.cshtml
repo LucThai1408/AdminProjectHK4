@@ -1,0 +1,40 @@
+﻿@* @model IEnumerable<API.Models.Room> *@
+@model API.Models.Room
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Detailed class information</h1>
+<div class="container">
+    <div>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Name)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Name)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Status)
+            </dt>
+            @if (Model.Status)
+            {
+                <dd class="col-sm-6 form-control">
+                    Active
+                </dd>
+            }
+            else
+            {
+                <dd class="col-sm-6 form-control">
+                    InActive
+                </dd>
+            }
+        </dl>
+    </div>
+    <div>
+        <a asp-action="Index" class="btn btn-primary">Back to List</a>
+    </div>
+</div>
