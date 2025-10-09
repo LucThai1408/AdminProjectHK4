@@ -66,11 +66,16 @@
 						<i class="fas fa-search"></i>
 					</a>
 					<div class="navbar-search-block">
-						<form class="form-inline" action="Search" method="get">
+						<form class="form-inline"
+							  asp-action="Index"
+							  asp-controller="@ViewContext.RouteData.Values["controller"]"
+							  method="get">
 							<div class="input-group input-group-sm">
-								<input class="form-control form-control-navbar" type="search"
-									   placeholder="Search name" aria-label="Search" name="search">
-								<input type="hidden" name="path" value="@path">
+								<input class="form-control form-control-navbar"
+									   type="search"
+									   placeholder="Search name"
+									   aria-label="Search"
+									   name="name" />
 								<div class="input-group-append">
 									<button class="btn btn-navbar" type="submit">
 										<i class="fas fa-search"></i>
@@ -129,10 +134,17 @@
 							</a>
 						</li>
 						<li class="nav-item">
-							<a href="/categories"
+							<a href="/course"
 							   class="nav-link">
 								<i class="nav-icon fas fa-circle"></i>
-								<p>Category</p>
+								<p>Courses</p>
+							</a>
+						</li>
+						<li class="nav-item">
+							<a href="/coursesubject"
+							   class="nav-link">
+								<i class="nav-icon fas fa-circle"></i>
+								<p>Courses subject</p>
 							</a>
 						</li>
 						<li class="nav-item">
@@ -149,18 +161,11 @@
 								<p>Room</p>
 							</a>
 						</li>
-						@* <li class="nav-item">
-							<a href="/chefs"
-							   class="nav-link">
-								<i class="nav-icon fas fa-circle"></i>
-								<p>Chef</p>
-							</a>
-						</li> *@
 						<li class="nav-item">
-							<a href="/orders"
+							<a href="/subject"
 							   class="nav-link">
 								<i class="nav-icon fas fa-circle"></i>
-								<p>Order</p>
+								<p>Subjects</p>
 							</a>
 						</li>
 

@@ -3,18 +3,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace API.Models
 {
-    [Table("Subjects")]
-    public class Subject
+    [Table("Courses")]
+    public class Course
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int SubjectId { get; set; }
+        public int CourseId { get; set; }
         [Required]
-        [StringLength(255)]
+        [StringLength(100)]
         public string? Name { get; set; }
-        public int MaxScore { get; set; }
-        public float PassScore { get; set; }
         public bool Status { get; set; } = true;
-        public ICollection<CourseSubject> CourseSubjects { get; set; } = new HashSet<CourseSubject>();
+        public ICollection<CourseSubject> CourseSubject {  get; set; } = new HashSet<CourseSubject>();
     }
 }

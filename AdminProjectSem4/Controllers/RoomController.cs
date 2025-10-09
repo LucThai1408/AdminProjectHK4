@@ -13,27 +13,38 @@ namespace AdminProjectSem4.Controllers
         string uri = "https://localhost:44341/api/admin/";
         HttpClient client = new HttpClient();
 
+        public bool fail { get; private set; }
+
         // GET: RoomControler
         public async Task<ActionResult> Index(string name = "", int currentPage = 1)
         {
             client.BaseAddress = new Uri(uri);
             int pageSize = 6;
-            var RoomAll = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms"));
-            var Rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms/?currentPage=" + currentPage));
-            if (!name.Equals(""))
+            var allRooms = JsonConvert.DeserializeObject<List<Room>>(
+                await client.GetStringAsync("Rooms"));
+
+            if (!string.IsNullOrEmpty(name))
             {
-                Rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms/?name=" + name));
-                RoomAll = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms/?name=" + name));
+                allRooms = allRooms
+                    .Where(r => r.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
-            else
-            {
-                Rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms/?currentPage=" + currentPage));
-            }
-            ViewBag.TotalPage = RoomAll.Count() % pageSize == 0 ? RoomAll.Count() / pageSize : RoomAll.Count() / pageSize + 1;
+
+            var totalPage = (int)Math.Ceiling((double)allRooms.Count / pageSize);
+
+            var rooms = allRooms
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.TotalPage = totalPage;
             ViewBag.CurrentPage = currentPage;
             ViewBag.Name = name;
-            return View(Rooms);
+
+            return View(rooms);
         }
+
+
 
         // GET: RoomControler/Details/5
         public async Task<ActionResult> Details(int id)
@@ -58,22 +69,11 @@ namespace AdminProjectSem4.Controllers
             var rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms"));
             if (room.Name == null || room.Name.Trim().Equals(""))
             {
-                ViewBag.ErrorName = "Category name can not empty!";
+                ViewBag.ErrorName = "Room name can not empty!";
                 return View(room);
             }
-            if (room != null)
-            {
-                foreach (var item in rooms)
-                {
-                    if (item.Name.ToLower().Equals(room.Name.Trim().ToLower()))
-                    {
-                        ViewBag.ErrorName = "Category name is already exist!";
-                        return View(room);
-                    }
-                }
-            }
             var response = await client.PostAsJsonAsync("Rooms", new { Name = room.Name, Status = room.Status });
-            TempData["msg"] = response.Content.ReadAsStringAsync().Result;
+            TempData["msg"] = "Room created successfully!";
             return RedirectToAction("Index");
 
         }
@@ -95,30 +95,14 @@ namespace AdminProjectSem4.Controllers
             var rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms"));
             if (room.Name == null || room.Name.Trim().Equals(""))
             {
-                ViewBag.ErrorName = "Category name can not empty!";
+                ViewBag.ErrorName = "Room name can not empty!";
                 return View(room);
-            }
-            if (room != null)
-            {
-                foreach (var item in rooms)
-                {
-                    if (item.Name.ToLower().Equals(room.Name.Trim().ToLower()) && item.RoomId != room.RoomId)
-                    {
-                        ViewBag.ErrorName = "Room name is already exist!";
-                        return View(room);
-                    }
-                }
             }
             var response = await client.PutAsJsonAsync("Rooms/" + id, room);
             TempData["msg"] = response.Content.ReadAsStringAsync().Result;
             return RedirectToAction("Index");
         }
 
-        // GET: RoomControler/Delete/5
-        //public ActionResult Delete(int id)
-        //{
-        //    return View();
-        //}
 
         // POST: RoomControler/Delete/5
         [HttpPost]
@@ -126,27 +110,32 @@ namespace AdminProjectSem4.Controllers
         public async Task<ActionResult> Delete(int id)
         {
             client.BaseAddress = new Uri(uri);
-            bool check = true;
-            var rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms"));
-            if (rooms != null)
+
+            // Lấy room theo id
+            var room = JsonConvert.DeserializeObject<Room>(
+                await client.GetStringAsync($"Rooms/{id}")
+            );
+
+            if (room == null)
             {
-                foreach (var room in rooms)
-                {
-                    if (room.RoomId == id)
-                    {
-                        check = false;
-                        break;
-                    }
-                }
-            }
-            if (!check)
-            {
-                TempData["msg"] = "Can not delete this room because has item related!";
+                TempData["msg"] = "Room not found!";
                 return RedirectToAction("Index");
             }
-            var responsd = await client.DeleteAsync("");
-            TempData["msg"] = responsd.Content.ReadAsStringAsync().Result;
+            room.Status = fail;
+
+            var response = await client.PutAsJsonAsync($"Rooms/{id}", room);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["msg"] = "Room has been disabled successfully!";
+            }
+            else
+            {
+                TempData["msg"] = "Error when disabling room!";
+            }
+
             return RedirectToAction("Index");
         }
+
     }
 }

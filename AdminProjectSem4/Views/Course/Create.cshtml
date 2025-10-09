@@ -1,4 +1,4 @@
-﻿@model API.Models.Room
+﻿@model API.Models.Course
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -12,8 +12,8 @@
 
                 <form asp-action="Create" method="post">
                     <div class="form-group mb-3">
-                        <label asp-for="Name" class="form-label fw-semibold">Classroom Name</label>
-                        <input asp-for="Name" class="form-control" placeholder="Enter classroom name..." />
+                        <label asp-for="Name" class="form-label fw-semibold">Course Name</label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter course name..." />
                         <span asp-validation-for="Name" class="text-danger small"></span>
                     </div>
 

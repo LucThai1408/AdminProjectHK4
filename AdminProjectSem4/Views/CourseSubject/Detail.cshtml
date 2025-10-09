@@ -1,0 +1,51 @@
+﻿@model API.Models.CourseSubject
+@{
+    ViewData["Title"] = "Detail";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="content mt-4">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <h3 class="text-center mb-4 fw-bold mt-4">Information course subject</h3>
+
+                <form asp-action="Create" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="form-group">
+                        <label asp-for="SubjectId" class="control-label">Subject</label>
+                        <select asp-for="SubjectId" asp-items="@ViewBag.Subject" class="form-control" disabled></select>
+                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                            <label asp-for="CourseId" class="control-label">Course</label>
+                            <select asp-for="CourseId" asp-items="@ViewBag.Course" class="form-control" disabled></select>
+                        <span asp-validation-for="CourseId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Sem" class="control-label"></label>
+                        <input asp-for="Sem" type="number" class="form-control" disabled />
+                        <span asp-validation-for="Sem" class="text-danger">@ViewBag.Sem</span>
+                    </div>
+                    <div class="form-group form-check p-0">
+                        <label class="mr-5">Status:</label>
+                        <input class="form-check-input" asp-for="Status" checked disabled /> Active
+
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <a asp-action="Index" class="btn btn-secondary ml-2">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+    @section Scripts {
+        @{
+            await Html.RenderPartialAsync("_ValidationScriptsPartial");
+        }
+    }
+</div>

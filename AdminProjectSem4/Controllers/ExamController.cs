@@ -37,10 +37,27 @@ namespace AdminProjectSem4.Controllers
         }
 
         // GET: ExamController1/Details/5
-        public ActionResult Details(int id)
+
+        public async Task<ActionResult> Detail(int id)
         {
-            return View();
+            client.BaseAddress = new Uri(uri);
+
+            var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
+            var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                await client.GetStringAsync("Accounts"));
+            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                await client.GetStringAsync("Subjects"));
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                await client.GetStringAsync("Rooms"));
+
+            // gán vào ViewBag, có chọn sẵn giá trị cũ
+            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubject);
+            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+            return View(exam);
         }
+
 
         // GET: ExamController1/Create
         public async Task<ActionResult> Create()
@@ -62,21 +79,10 @@ namespace AdminProjectSem4.Controllers
         }
 
         // POST: ExamController1/Create
-        [HttpPost]
         [ValidateAntiForgeryToken]
-        //public ActionResult Create(IFormCollection collection)
-        //{
-        //    client.BaseAddress = new Uri(uri);
-
-            
-        //}
-
         [HttpPost]
         public async Task<ActionResult> Create(Exam exam)
         {
-            client.BaseAddress = new Uri(uri);
-            var exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams"));
-            // 1. Validate cơ bản
             bool isValid = true;
 
             if (string.IsNullOrWhiteSpace(exam.Name))
@@ -84,7 +90,161 @@ namespace AdminProjectSem4.Controllers
                 ViewBag.ErrorName = "Exam name cannot be empty!";
                 isValid = false;
             }
-            if (exam.SubjectId <= 0) { ViewBag.ErrorSubject = "Subject is required!"; isValid = false; }
+            if (exam.CourseSubjectId <= 0)
+            {
+                ViewBag.ErrorSubject = "Subject is required!";
+                isValid = false;
+            }
+            if (exam.RoomId <= 0)
+            {
+                ViewBag.ErrorRoom = "Room is required!";
+                isValid = false;
+            }
+            if (exam.AccountId <= 0)
+            {
+                ViewBag.ErrorAccount = "Account is required!";
+                isValid = false;
+            }
+            if (exam.ExamDay == default)
+            {
+                ViewBag.ErrorDay = "Exam day is required!";
+                isValid = false;
+            }
+            if (exam.ExamTime == default)
+            {
+                ViewBag.ErrorTime = "Exam time is required!";
+                isValid = false;
+            }
+            if (exam.Fee < 0)
+            {
+                ViewBag.ErrorFee = "Fee must be >= 0!";
+                isValid = false;
+            }
+
+            // Nếu dữ liệu không hợp lệ → load lại dropdown và trả về View
+            if (!isValid)
+            {
+                client.BaseAddress = new Uri(uri);
+
+                var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                    await client.GetStringAsync("Accounts"));
+                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                    await client.GetStringAsync("Subjects"));
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                    await client.GetStringAsync("Rooms"));
+
+                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+                return View(exam);
+            }
+
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(new
+                    {
+                        name = exam.Name,
+                        subjectId = exam.CourseSubjectId,
+                        roomId = exam.RoomId,
+                        accountId = exam.AccountId,
+                        examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        examTime = exam.ExamTime.ToString(@"hh\:mm\:ss"),
+                        status = exam.Status,
+                        fee = exam.Fee
+                    });
+
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                    var response = await client.PostAsync($"{uri}Exams", content);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        TempData["msg"] = "Create exam failed: " + await response.Content.ReadAsStringAsync();
+
+                        // Khi API lỗi → load lại dropdown để form không trống
+                        var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                            await this.client.GetStringAsync("Accounts"));
+                        var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                            await this.client.GetStringAsync("Subjects"));
+                        var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                            await this.client.GetStringAsync("Rooms"));
+
+                        ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
+                        ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                        ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+                        return View(exam);
+                    }
+                }
+                TempData["msg"] = "Exam created successfully!";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                TempData["msg"] = "Error: " + ex.Message;
+
+                var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                    await client.GetStringAsync("Accounts"));
+                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                    await client.GetStringAsync("Subjects"));
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                    await client.GetStringAsync("Rooms"));
+
+                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+                return View(exam);
+            }
+        }
+
+
+
+
+        // GET: ExamController1/Edit/5
+        public async Task<ActionResult> Edit(int id)
+        {
+            client.BaseAddress = new Uri(uri);
+
+            var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
+
+            var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                await client.GetStringAsync("Accounts"));
+
+            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                await client.GetStringAsync("Subjects"));
+
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                await client.GetStringAsync("Rooms"));
+            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
+            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+            return View(exam);
+        }
+
+
+        // POST: ExamController1/Edit/5
+        [HttpPost]
+        public async Task<ActionResult> Edit(int id, Exam exam)
+        {
+            if (id != exam.ExamId)
+            {
+                TempData["msg"] = "Exam ID mismatch!";
+                return View(exam);
+            }
+
+            // validate cơ bản
+            bool isValid = true;
+            if (string.IsNullOrWhiteSpace(exam.Name))
+            {
+                ViewBag.ErrorName = "Exam name cannot be empty!";
+                isValid = false;
+            }
+            if (exam.CourseSubjectId <= 0) { ViewBag.ErrorSubject = "Subject is required!"; isValid = false; }
             if (exam.RoomId <= 0) { ViewBag.ErrorRoom = "Room is required!"; isValid = false; }
             if (exam.AccountId <= 0) { ViewBag.ErrorAccount = "Account is required!"; isValid = false; }
             if (exam.ExamDay == default) { ViewBag.ErrorDay = "Exam day is required!"; isValid = false; }
@@ -92,31 +252,52 @@ namespace AdminProjectSem4.Controllers
             if (exam.Fee < 0) { ViewBag.ErrorFee = "Fee must be >= 0!"; isValid = false; }
 
             if (!isValid)
-                return View(exam);
+            {
+                client.BaseAddress = new Uri(uri);
 
+                var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                    await client.GetStringAsync("Accounts"));
+                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                    await client.GetStringAsync("Subjects"));
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                    await client.GetStringAsync("Rooms"));
+
+                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+                return View(exam);
+            }
             try
             {
-                // 2. Chuẩn bị dữ liệu gửi lên API
-                var formData = new MultipartFormDataContent();
-                formData.Add(new StringContent(exam.Name.Trim()), "name");
-                formData.Add(new StringContent(exam.SubjectId.ToString()), "subjectId");
-                formData.Add(new StringContent(exam.RoomId.ToString()), "roomId");
-                formData.Add(new StringContent(exam.AccountId.ToString()), "accountId");
-                formData.Add(new StringContent(exam.ExamDay.ToString("yyyy-MM-dd")), "examDay");
-                formData.Add(new StringContent(exam.ExamTime.ToString(@"hh\:mm")), "examTime");
-                formData.Add(new StringContent(exam.Status.ToString()), "status");
-                formData.Add(new StringContent(exam.Fee.ToString()), "fee");
+                using (var client = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(new
+                    {
+                        examId = exam.ExamId,   // bắt buộc để API map đúng record
+                        name = exam.Name,
+                        subjectId = exam.CourseSubjectId,
+                        roomId = exam.RoomId,
+                        accountId = exam.AccountId,
+                        examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        examTime = exam.ExamTime.ToString(@"hh\:mm\:ss"),
+                        status = exam.Status,
+                        fee = exam.Fee
+                    });
 
-                // 3. Gửi request
-                var response = await client.PostAsync("exams", formData);
+                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-                //if (!response.IsSuccessStatusCode)
-                //{
-                //    TempData["msg"] = "Create exam failed: " + await response.Content.ReadAsStringAsync();
-                //    return View(exam);
-                //}
+                    // Gọi PUT API
+                    var response = await client.PutAsync($"{uri}Exams/{id}", content);
 
-                TempData["msg"] = "Exam created successfully!";
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        TempData["msg"] = "Update exam failed: " + await response.Content.ReadAsStringAsync();
+                        return View(exam);
+                    }
+                }
+
+                TempData["msg"] = "Exam updated successfully!";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -126,27 +307,6 @@ namespace AdminProjectSem4.Controllers
             }
         }
 
-
-        // GET: ExamController1/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: ExamController1/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
 
         // GET: ExamController1/Delete/5
         public ActionResult Delete(int id)

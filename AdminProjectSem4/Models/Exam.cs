@@ -13,7 +13,7 @@ namespace API.Models
         [StringLength(100)]
         public string Name { get; set; }
         [Required]
-        public int SubjectId { get; set; }
+        public int CourseSubjectId { get; set; }
         [Required]
         public int RoomId { get; set; }
         [Required]
@@ -26,8 +26,8 @@ namespace API.Models
         public ICollection<AccountExam> AccountExams { get; set; } = new HashSet<AccountExam>();
         [ForeignKey("AccountId")]
         public Account? Account { get; set; }
-        [ForeignKey("SubjectId")]
-        public Subject? Subject { get; set; }
+        [ForeignKey("CourseSubjectId")]
+        public CourseSubject? CourseSubject { get; set; }
         [ForeignKey("RoomId")]
         public Room? Room { get; set; }
         public ICollection<Register> Registers { get; set; } = new HashSet<Register>();

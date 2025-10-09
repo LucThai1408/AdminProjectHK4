@@ -35,10 +35,12 @@ namespace API.Models
 
             // Exam - Subject
             modelBuilder.Entity<Exam>()
-                .HasOne(e => e.Subject)
+                .HasOne(e => e.CourseSubject)
                 .WithMany(s => s.Exams)
-                .HasForeignKey(e => e.SubjectId)
+                .HasForeignKey(e => e.CourseSubjectId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
+        public DbSet<API.Models.Course> Course { get; set; } = default!;
+        public DbSet<API.Models.CourseSubject> CourseSubject { get; set; } = default!;
     }
 }

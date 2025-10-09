@@ -1,5 +1,5 @@
 ﻿
-@model IEnumerable<API.Models.Room>
+@model IEnumerable<API.Models.Subject>
 
 @{
     ViewData["Title"] = "Index";
@@ -9,7 +9,7 @@
     var name = ViewBag.Name as string;
 }
 
-<h1>List of classrooms</h1>
+<h1>List of subjects</h1>
 
 <div class="container">
 
@@ -25,19 +25,26 @@
         </form> *@
 
     </div>
+
     <table class="table table-bordered table-hover">
         <thead>
             <tr>
-                <th class="col-2">
-                    @Html.DisplayNameFor(model => model.RoomId)
+                <th class="col-1">
+                    @Html.DisplayNameFor(model => model.SubjectId)
                 </th>
-                <th class="col-3">
+                <th class="col-2">
                     @Html.DisplayNameFor(model => model.Name)
                 </th>
-                <th class="col-3">
+                <th class="col-2">
+                    @Html.DisplayNameFor(model => model.MaxScore)
+                </th>
+                <th class="col-2">
+                    @Html.DisplayNameFor(model => model.PassScore)
+                </th>
+                <th class="col-2">
                     @Html.DisplayNameFor(model => model.Status)
                 </th>
-                <th class="col-4">
+                <th class="col-3">
                     Action
                 </th>
             </tr>
@@ -47,10 +54,16 @@
             {
                 <tr>
                     <td>
-                        @Html.DisplayFor(modelItem => item.RoomId)
+                        @Html.DisplayFor(modelItem => item.SubjectId)
                     </td>
                     <td>
                         @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.MaxScore)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.PassScore)
                     </td>
                     @if (item.Status)
                     {
@@ -61,13 +74,13 @@
                         <td>InActive</td>
                     }
                     <td>
-                        <a asp-action="Edit" asp-route-id="@item.RoomId" class="btn btn-success me-1">
+                        <a asp-action="Edit" asp-route-id="@item.SubjectId" class="btn btn-success me-1">
                             <i class="bi bi-pencil-square"></i> Edit
                         </a>
-                        <a asp-action="Details" asp-route-id="@item.RoomId" class="btn btn-info me-1 text-white">
+                        <a asp-action="Detail" asp-route-id="@item.SubjectId" class="btn btn-info me-1 text-white">
                             <i class="bi bi-info-circle"></i> Details
                         </a>
-                        <form asp-action="Delete" asp-route-id="@item.RoomId" method="post" style="display:inline">
+                        <form asp-action="Delete" asp-route-id="@item.SubjectId" method="post" style="display:inline">
                             <button type="submit" class="btn btn-danger"
                                     onclick="return confirm('Do you want to delete this record?');">
                                 <i class="bi bi-trash"></i> Delete
@@ -85,14 +98,12 @@
         {
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <!-- Nút 'Trước' -->
                     <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                         <a class="page-link" href="?currentPage=@(currentPage - 1)" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
 
-                    <!-- Các số trang -->
                     @for (int i = 1; i <= totalPage; i++)
                     {
                         <li class="page-item @(i == currentPage ? "active" : "")">
@@ -100,7 +111,6 @@
                         </li>
                     }
 
-                    <!-- Nút 'Tiếp theo' -->
                     <li class="page-item @(currentPage == totalPage ? "disabled" : "")">
                         <a class="page-link" href="?currentPage=@(currentPage + 1)" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>

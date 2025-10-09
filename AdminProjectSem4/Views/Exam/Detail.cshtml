@@ -1,11 +1,11 @@
 ﻿@model API.Models.Exam
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Detail";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Create a new exam</h1>
+<h1>Exam details</h1>
 <div class="container">
 
     <div class="btn-danger text-center">@ViewBag.Error</div>
@@ -18,22 +18,22 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label asp-for="Name" class="control-label"></label>
-                    <input asp-for="Name" class="form-control" placeholder="Enter exam name..."/>
-                    <span asp-validation-for="Name" class="text-danger">@ViewBag.ErrorName</span>
+                    <input asp-for="Name" class="form-control" disabled/>
+                    <span class="text-danger">@ViewBag.ErrorName</span>
                 </div>
                 <div class="form-group">
                     <label asp-for="CourseSubjectId" class="control-label"></label>
-                    <select asp-for="CourseSubjectId" asp-items="@ViewBag.Subject" class="form-control"></select>
+                    <select asp-for="CourseSubjectId" asp-items="@ViewBag.Subject" class="form-control" disabled></select>
                     <span asp-validation-for="CourseSubjectId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="RoomId" class="control-label"></label>
-                    <select asp-for="RoomId" asp-items="@ViewBag.Room" class="form-control"></select>
+                    <select asp-for="RoomId" asp-items="@ViewBag.Room" class="form-control" disabled></select>
                     <span asp-validation-for="RoomId" class="text-danger"></span>
                 </div>
                 <div class="form-group">
                     <label asp-for="AccountId" class="control-label"></label>
-                    <select asp-for="AccountId" asp-items="@ViewBag.Account" class="form-control"></select>
+                    <select asp-for="AccountId" asp-items="@ViewBag.Account" class="form-control" disabled></select>
                     <span asp-validation-for="AccountId" class="text-danger"></span>
                 </div>
             </div>
@@ -42,30 +42,29 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label asp-for="ExamDay" class="control-label"></label>
-                    <input asp-for="ExamDay" type="date" class="form-control" />
-                    <span asp-validation-for="ExamDay" class="text-danger">@ViewBag.ExamDay</span>
+                    <input asp-for="ExamDay" type="date" class="form-control" disabled />
+                    <span class="text-danger">@ViewBag.ExamDay</span>
                 </div>
                 <div class="form-group">
                     <label asp-for="ExamTime" class="control-label"></label>
-                    <input asp-for="ExamTime" type="time" class="form-control" />
-                    <span asp-validation-for="ExamTime" class="text-danger">@ViewBag.ExamTime</span>
+                    <input asp-for="ExamTime" type="time" class="form-control" disabled />
+                    <span class="text-danger">@ViewBag.ExamTime</span>
                 </div>
                 <div class="form-group">
                     <label asp-for="Fee" class="control-label"></label>
-                    <input asp-for="Fee" type="number" min="1" class="form-control" placeholder="Enter fee..."/>
-                    <span asp-validation-for="Fee" class="text-danger">@ViewBag.Fee</span>
+                    <input asp-for="Fee" type="number" min="1" class="form-control" disabled />
+                    <span class="text-danger">@ViewBag.Fee</span>
                 </div>
                 <div class="form-group form-check p-0">
                     
                     <label class="mr-5">Status:</label>
-                    <input class="form-check-input" asp-for="Status" checked /> Active
+                    <input class="form-check-input" asp-for="Status" disabled /> Active
                 </div> 
             </div>
         </div>
 
         <!-- Nút hành động -->
         <div class="form-group mt-3">
-            <input type="submit" value="Create" class="btn btn-primary" />
             <a asp-action="Index" class="btn btn-secondary ml-2">Back to List</a>
         </div>
     </form>

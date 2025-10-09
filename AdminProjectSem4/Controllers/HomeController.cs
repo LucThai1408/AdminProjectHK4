@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using AdminProjectSem4.Models;
+using API.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AdminProjectSem4.Controllers
