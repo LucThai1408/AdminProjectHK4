@@ -8,16 +8,18 @@
 
   <ItemGroup>
     <PackageReference Include="AspNetCore.Security.Jwt" Version="3.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.18" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
     <PackageReference Include="X.PagedList" Version="10.5.9" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Views\Accounts\" />
     <Folder Include="Views\Class\" />
     <Folder Include="Views\Exams\" />
     <Folder Include="Views\Subjects\" />
-    <Folder Include="Views\Accounts\" />
   </ItemGroup>
 
 </Project>
