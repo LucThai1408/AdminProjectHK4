@@ -1,11 +1,10 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace WebEcom.Models
+namespace API.Models
 {
     public class Cipher
     {
-        //hàm mã hóa 1 chuỗi sử dụng MD5
         public static string GenerateMD5(string input)
         {
             // Step 1, calculate MD5 hash from input

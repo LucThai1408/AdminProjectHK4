@@ -1,4 +1,5 @@
 ﻿using API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -55,12 +56,14 @@ namespace AdminProjectSem4.Controllers
         }
 
         // GET: RoomControler/Create
+        [Authorize(Roles = "1")]
         public ActionResult Create()
         {
             return View();
         }
 
         // POST: RoomControler/Create
+        [Authorize(Roles = "1")]
         [HttpPost]
         //[ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(Room room)
@@ -88,6 +91,7 @@ namespace AdminProjectSem4.Controllers
 
         // POST: RoomControler/Edit/5
         [HttpPost]
+        [Authorize(Roles = "1")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit(int id, Room room)
         {
@@ -106,6 +110,7 @@ namespace AdminProjectSem4.Controllers
 
         // POST: RoomControler/Delete/5
         [HttpPost]
+        [Authorize(Roles = "1")]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Delete(int id)
         {

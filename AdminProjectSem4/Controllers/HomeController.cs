@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace AdminProjectSem4.Controllers
 {
-    [Authorize]
+    
     public class HomeController : Controller
     {
         string url = "https://localhost:44341/api/admin/";
@@ -22,7 +22,7 @@ namespace AdminProjectSem4.Controllers
         {
             client.BaseAddress = new Uri(url);
         }
-
+        [Authorize]
         public IActionResult Index()
         {
             return View();

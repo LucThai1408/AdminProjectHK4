@@ -25,7 +25,7 @@ namespace API.Models
         public string? Phone { get; set; }
         public int Role { get; set; } = 0;
         public string? Image { get; set; }
-        public bool Status {  get; set; } = true;
+        public bool Status { get; set; } = true;
 
         [ForeignKey("RoomId")]
         public Room? Room { get; set; }

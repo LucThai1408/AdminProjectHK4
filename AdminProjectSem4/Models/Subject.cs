@@ -15,6 +15,6 @@ namespace API.Models
         public int MaxScore { get; set; }
         public float PassScore { get; set; }
         public bool Status { get; set; } = true;
-        public ICollection<Exam> Exams { get; set; } = new HashSet<Exam>();
+        public ICollection<CourseSubject> CourseSubjects { get; set; } = new HashSet<CourseSubject>();
     }
 }

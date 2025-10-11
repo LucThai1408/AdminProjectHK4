@@ -9,7 +9,7 @@
     var name = ViewBag.Name as string;
     var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 }
-
+<div class="container"> 
 <h1>Quản lý tài khoản</h1>
 <div class="btn-success text-center text-uppercase">@TempData["msg"]</div>
 
@@ -20,33 +20,36 @@
     </p>
 }
 
-<form method="get" class="row g-2 mb-3 align-items-end">
-    <!-- Tìm kiếm theo tên -->
-    <div class="col-md-3">
-        <label class="form-label visually-hidden">Tên</label>
-        <input type="text" name="name" class="form-control" placeholder="Tìm kiếm theo tên, email, fullname"
-               value="@ViewBag.Name" />
-    </div>
+    <form method="get" class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+        <!-- Ô tìm kiếm theo tên -->
+        <div class="flex-grow-1 rounded-0 mr-3" style="min-width: 200px">
+            <input type="text" name="name" class="form-control"
+                   placeholder="Tìm kiếm theo tên, email, fullname"
+                   value="@ViewBag.Name" />
+        </div>
 
-    <!-- Dropdown Role -->
-    <div class="col-md-3">
-        <label class="form-label visually-hidden">Role</label>
-        <select name="role" asp-items="@(ViewBag.RoleList as SelectList)" class="form-select"></select>
-    </div>
+        <!-- Dropdown Role -->
+        <div>
+            <select name="role" asp-items="@(ViewBag.RoleList as SelectList)"
+                    class="form-select p-2 mx-3" style="min-width: 150px;">
+            </select>
+        </div>
 
-    <!-- Dropdown Status -->
-    <div class="col-md-3">
-        <label class="form-label visually-hidden">Status</label>
-        <select name="status" asp-items="@(ViewBag.StatusList as SelectList)" class="form-select"></select>
-    </div>
+        <!-- Dropdown Status -->
+        <div>
+            <select name="status" asp-items="@(ViewBag.StatusList as SelectList)"
+                    class="form-select p-2 mx-3" style="min-width: 150px;">
+            </select>
+        </div>
 
-    <!-- Nút lọc -->
-    <div class="col-md-3">
-        <button type="submit" class="btn btn-primary w-100">Lọc</button>
-    </div>
-</form>
+        <!-- Nút lọc -->
+        <div>
+            <button type="submit" class="btn btn-primary px-4 rounded-0 p-2">Lọc</button>
+        </div>
+    </form>
 
-<table class="table">
+
+    <table class="table table-bordered table-hover">
     <thead>
         <tr>
             <th>AccountId</th>
@@ -175,3 +178,4 @@ else
 {
     <p class="text-center">No item!</p>
 }
+</div>
