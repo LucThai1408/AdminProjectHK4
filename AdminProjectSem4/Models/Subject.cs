@@ -16,5 +16,6 @@ namespace API.Models
         public float PassScore { get; set; }
         public bool Status { get; set; } = true;
         public ICollection<CourseSubject> CourseSubjects { get; set; } = new HashSet<CourseSubject>();
+        public ICollection<Register> Registers { get; set; } = new HashSet<Register>();
     }
 }

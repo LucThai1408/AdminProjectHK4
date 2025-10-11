@@ -14,5 +14,6 @@ namespace API.Models
         public string? Name { get; set; }
         public bool Status { get; set; } = true;
         public ICollection<CourseSubject> CourseSubject {  get; set; } = new HashSet<CourseSubject>();
+        public ICollection<CourseStudent> CourseStudents {  get; set; } = new HashSet<CourseStudent>();
     }
 }

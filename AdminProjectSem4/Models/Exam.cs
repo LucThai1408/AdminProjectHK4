@@ -9,16 +9,14 @@ namespace API.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ExamId { get; set; }
-        [Required]
-        [StringLength(100)]
         public string Name { get; set; }
-        [Required]
-        public int CourseSubjectId { get; set; }
         [Required]
         public int RoomId { get; set; }
         [Required]
         public int AccountId { get; set; }
-        public DateTime ExamDay { get; set; } 
+        [Required]
+        public DateTime ExamDay { get; set; }
+        [Required] 
         public TimeSpan ExamTime { get; set; }
         public bool Status { get; set; } = true;
         public float Fee { get; set; }
