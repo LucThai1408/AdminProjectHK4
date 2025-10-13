@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Security.Policy;
 using System.Xml.Linq;
@@ -15,26 +16,54 @@ namespace AdminProjectSem4.Controllers
         HttpClient client = new HttpClient();
 
         // GET: ExamController1
+        public bool fail { get; private set; }
         public async Task<ActionResult> Index(string name = "", int currentPage = 1)
         {
             client.BaseAddress = new Uri(uri);
             int pageSize = 6;
-            var ExamAll = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams"));
-            var Exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?currentPage=" + currentPage));
-            if (!name.Equals(""))
+
+            // Gọi API exams
+            string endpoint = string.IsNullOrEmpty(name)
+                ? $"Exams/?currentPage={currentPage}"
+                : $"Exams/?name={name}";
+            var json = await client.GetStringAsync(endpoint);
+            var data = JArray.Parse(json);
+
+            // Gọi thêm API accounts và rooms
+            var accountsJson = await client.GetStringAsync("Accounts");
+            var roomsJson = await client.GetStringAsync("Rooms");
+            var accounts = JsonConvert.DeserializeObject<List<Account>>(accountsJson) ?? new();
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(roomsJson) ?? new();
+
+            // Parse dữ liệu Exam
+            var exams = data.Select(x => new Exam
             {
-                Exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?name=" + name));
-                ExamAll = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?name=" + name));
-            }
-            else
-            {
-                Exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?currentPage=" + currentPage));
-            }
-            ViewBag.TotalPage = ExamAll.Count() % pageSize == 0 ? ExamAll.Count() / pageSize : ExamAll.Count() / pageSize + 1;
+                ExamId = (int)x["examId"],
+                Name = (string)x["name"],
+                AccountId = (int)x["accountId"],
+                RoomId = (int)x["roomId"],
+                ExamDay = DateTime.TryParse((string?)x["examDayString"], out var day) ? day : DateTime.MinValue,
+                ExamTime = TimeSpan.TryParse((string?)x["examTimeString"], out var time) ? time : TimeSpan.Zero,
+                Status = (bool)(x["status"] ?? true),
+                Fee = (float)(x["fee"] ?? 0),
+                CreatedAt = DateTime.TryParse((string?)x["createdAt"], out var created) ? created : DateTime.Now,
+                Account = accounts.FirstOrDefault(a => a.AccountId == (int)x["accountId"]),
+                Room = rooms.FirstOrDefault(r => r.RoomId == (int)x["roomId"])
+            }).ToList();
+
+           
+
+            // Phân trang
+            int totalPage = (int)Math.Ceiling((double)exams.Count / pageSize);
+            var pagedData = exams.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.TotalPage = totalPage;
             ViewBag.CurrentPage = currentPage;
             ViewBag.Name = name;
-            return View(Exams);
+
+            return View(pagedData);
         }
+
 
         // GET: ExamController1/Details/5
 
@@ -45,13 +74,9 @@ namespace AdminProjectSem4.Controllers
             var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
             var accounts = JsonConvert.DeserializeObject<List<Account>>(
                 await client.GetStringAsync("Accounts"));
-            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-                await client.GetStringAsync("Subjects"));
             var rooms = JsonConvert.DeserializeObject<List<Room>>(
                 await client.GetStringAsync("Rooms"));
 
-            // gán vào ViewBag, có chọn sẵn giá trị cũ
-            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubject);
             ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
             ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
 
@@ -64,9 +89,10 @@ namespace AdminProjectSem4.Controllers
         {
             client.BaseAddress = new Uri(uri);
 
-            var accounts = JsonConvert.DeserializeObject<List<Account>>(
-                await client.GetStringAsync("Accounts"));
-            Console.WriteLine(accounts);
+            var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                await client.GetStringAsync("Accounts")) ?? new List<Account>();
+            var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
+
             var subjects = JsonConvert.DeserializeObject<List<Subject>>(
                 await client.GetStringAsync("Subjects"));
             var rooms = JsonConvert.DeserializeObject<List<Room>>(
@@ -74,7 +100,7 @@ namespace AdminProjectSem4.Controllers
 
             ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name");
             ViewBag.Room = new SelectList(rooms, "RoomId", "Name");
-            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName");
+            ViewBag.Account = new SelectList(students, "AccountId", "FullName");
             return View();
         }
 
@@ -88,11 +114,6 @@ namespace AdminProjectSem4.Controllers
             if (string.IsNullOrWhiteSpace(exam.Name))
             {
                 ViewBag.ErrorName = "Exam name cannot be empty!";
-                isValid = false;
-            }
-            if (exam.CourseSubjectId <= 0)
-            {
-                ViewBag.ErrorSubject = "Subject is required!";
                 isValid = false;
             }
             if (exam.RoomId <= 0)
@@ -121,21 +142,18 @@ namespace AdminProjectSem4.Controllers
                 isValid = false;
             }
 
-            // Nếu dữ liệu không hợp lệ → load lại dropdown và trả về View
             if (!isValid)
             {
                 client.BaseAddress = new Uri(uri);
 
-                var accounts = JsonConvert.DeserializeObject<List<Account>>(
-                    await client.GetStringAsync("Accounts"));
-                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-                    await client.GetStringAsync("Subjects"));
+                var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+              await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
                 var rooms = JsonConvert.DeserializeObject<List<Room>>(
                     await client.GetStringAsync("Rooms"));
 
-                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
                 ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
                 return View(exam);
             }
@@ -147,7 +165,6 @@ namespace AdminProjectSem4.Controllers
                     var json = JsonConvert.SerializeObject(new
                     {
                         name = exam.Name,
-                        subjectId = exam.CourseSubjectId,
                         roomId = exam.RoomId,
                         accountId = exam.AccountId,
                         examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
@@ -165,16 +182,16 @@ namespace AdminProjectSem4.Controllers
                         TempData["msg"] = "Create exam failed: " + await response.Content.ReadAsStringAsync();
 
                         // Khi API lỗi → load lại dropdown để form không trống
-                        var accounts = JsonConvert.DeserializeObject<List<Account>>(
-                            await this.client.GetStringAsync("Accounts"));
+                        var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                        await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                        var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
                         var subjects = JsonConvert.DeserializeObject<List<Subject>>(
                             await this.client.GetStringAsync("Subjects"));
                         var rooms = JsonConvert.DeserializeObject<List<Room>>(
                             await this.client.GetStringAsync("Rooms"));
-
-                        ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
+                        ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name");
                         ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-                        ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                        ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
                         return View(exam);
                     }
@@ -186,16 +203,16 @@ namespace AdminProjectSem4.Controllers
             {
                 TempData["msg"] = "Error: " + ex.Message;
 
-                var accounts = JsonConvert.DeserializeObject<List<Account>>(
-                    await client.GetStringAsync("Accounts"));
+                var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                 await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
                 var subjects = JsonConvert.DeserializeObject<List<Subject>>(
                     await client.GetStringAsync("Subjects"));
                 var rooms = JsonConvert.DeserializeObject<List<Room>>(
                     await client.GetStringAsync("Rooms"));
 
-                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
                 ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
                 return View(exam);
             }
@@ -211,17 +228,16 @@ namespace AdminProjectSem4.Controllers
 
             var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
 
-            var accounts = JsonConvert.DeserializeObject<List<Account>>(
-                await client.GetStringAsync("Accounts"));
-
+            var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                 await client.GetStringAsync("Accounts")) ?? new List<Account>();
+            var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
             var subjects = JsonConvert.DeserializeObject<List<Subject>>(
                 await client.GetStringAsync("Subjects"));
 
             var rooms = JsonConvert.DeserializeObject<List<Room>>(
                 await client.GetStringAsync("Rooms"));
-            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
             ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+            ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
             return View(exam);
         }
@@ -244,7 +260,6 @@ namespace AdminProjectSem4.Controllers
                 ViewBag.ErrorName = "Exam name cannot be empty!";
                 isValid = false;
             }
-            if (exam.CourseSubjectId <= 0) { ViewBag.ErrorSubject = "Subject is required!"; isValid = false; }
             if (exam.RoomId <= 0) { ViewBag.ErrorRoom = "Room is required!"; isValid = false; }
             if (exam.AccountId <= 0) { ViewBag.ErrorAccount = "Account is required!"; isValid = false; }
             if (exam.ExamDay == default) { ViewBag.ErrorDay = "Exam day is required!"; isValid = false; }
@@ -255,16 +270,14 @@ namespace AdminProjectSem4.Controllers
             {
                 client.BaseAddress = new Uri(uri);
 
-                var accounts = JsonConvert.DeserializeObject<List<Account>>(
-                    await client.GetStringAsync("Accounts"));
-                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-                    await client.GetStringAsync("Subjects"));
+                var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                 await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
                 var rooms = JsonConvert.DeserializeObject<List<Room>>(
                     await client.GetStringAsync("Rooms"));
 
-                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
                 ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
                 return View(exam);
             }
@@ -276,7 +289,6 @@ namespace AdminProjectSem4.Controllers
                     {
                         examId = exam.ExamId,   // bắt buộc để API map đúng record
                         name = exam.Name,
-                        subjectId = exam.CourseSubjectId,
                         roomId = exam.RoomId,
                         accountId = exam.AccountId,
                         examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
@@ -309,24 +321,32 @@ namespace AdminProjectSem4.Controllers
 
 
         // GET: ExamController1/Delete/5
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            return View();
-        }
+            client.BaseAddress = new Uri(uri);
+            var exam = JsonConvert.DeserializeObject<Exam>(
+                await client.GetStringAsync($"Exams/{id}")
+            );
 
-        // POST: ExamController1/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
+            if (exam == null)
             {
-                return RedirectToAction(nameof(Index));
+                TempData["msg"] = "Exam not found!";
+                return RedirectToAction("Index");
             }
-            catch
+            exam.Status = fail;
+
+            var response = await client.PutAsJsonAsync($"Exams/{id}", exam);
+
+            if (response.IsSuccessStatusCode)
             {
-                return View();
+                TempData["msg"] = "Exam ubject has been disabled successfully!";
             }
+            else
+            {
+                TempData["msg"] = "Error when disabling exam!";
+            }
+
+            return RedirectToAction("Index");
         }
     }
 }

@@ -7,6 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Views\Class\**" />
+    <Compile Remove="Views\Exams\**" />
+    <Compile Remove="Views\Subjects\**" />
+    <Content Remove="Views\Class\**" />
+    <Content Remove="Views\Exams\**" />
+    <Content Remove="Views\Subjects\**" />
+    <EmbeddedResource Remove="Views\Class\**" />
+    <EmbeddedResource Remove="Views\Exams\**" />
+    <EmbeddedResource Remove="Views\Subjects\**" />
+    <None Remove="Views\Class\**" />
+    <None Remove="Views\Exams\**" />
+    <None Remove="Views\Subjects\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNetCore.Security.Jwt" Version="3.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
@@ -17,9 +32,6 @@
 
   <ItemGroup>
     <Folder Include="Views\Accounts\" />
-    <Folder Include="Views\Class\" />
-    <Folder Include="Views\Exams\" />
-    <Folder Include="Views\Subjects\" />
   </ItemGroup>
 
 </Project>

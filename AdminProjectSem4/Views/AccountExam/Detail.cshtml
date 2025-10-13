@@ -1,6 +1,6 @@
 ﻿@model API.Models.CourseSubject
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Detail";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -8,39 +8,34 @@
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <h3 class="text-center mb-4 fw-bold mt-4">Update infomation course subject</h3>
+                <h3 class="text-center mb-4 fw-bold mt-4">Information course subject</h3>
 
-                <form asp-action="Edit" enctype="multipart/form-data">
+                <form asp-action="Create" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <input asp-for="CourseSubjectId" type="number" hidden class="form-control" />
+
                     <div class="form-group">
                         <label asp-for="SubjectId" class="control-label">Subject</label>
-                        <select asp-for="SubjectId" asp-items="@ViewBag.Subject" class="form-control"></select>
+                        <select asp-for="SubjectId" asp-items="@ViewBag.Subject" class="form-control" disabled></select>
                         <span asp-validation-for="SubjectId" class="text-danger"></span>
                     </div>
                     <div class="form-group">
                             <label asp-for="CourseId" class="control-label">Course</label>
-                        <select asp-for="CourseId" asp-items="@ViewBag.Course" class="form-control"></select>
+                            <select asp-for="CourseId" asp-items="@ViewBag.Course" class="form-control" disabled></select>
                         <span asp-validation-for="CourseId" class="text-danger"></span>
                     </div>
+
                     <div class="form-group">
                         <label asp-for="Sem" class="control-label"></label>
-                        <select asp-for="Sem" class="form-select w-100 p-2 rounded-1" style="border-radius: .25rem !important;">
-                            <option value="">-- Choose sem --</option>
-                            <option value="1"> Sem 1</option>
-                            <option value="2">Sem 2</option>
-                            <option value="3">Sem 3</option>
-                            <option value="4">Sem 4</option>
-                        </select>
+                        <input asp-for="Sem" type="number" class="form-control" disabled />
                         <span asp-validation-for="Sem" class="text-danger">@ViewBag.Sem</span>
                     </div>
                     <div class="form-group form-check p-0">
                         <label class="mr-5">Status:</label>
-                        <input class="form-check-input" asp-for="Status" /> Active
+                        <input class="form-check-input" asp-for="Status" checked disabled /> Active
 
                     </div>
+
                     <div class="form-group mt-3">
-                        <input type="submit" value="Save" class="btn btn-primary" />
                         <a asp-action="Index" class="btn btn-secondary ml-2">Back to List</a>
                     </div>
                 </form>

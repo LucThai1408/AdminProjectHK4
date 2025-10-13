@@ -8,14 +8,11 @@
         public int AccountId { get; set; }
         public string? AccountName { get; set; }
 
-        public int CourseSubjectId { get; set; }
-        public string? SubjectName { get; set; }
-
         public int RoomId { get; set; }
         public string? RoomName { get; set; }
 
-        public DateTime ExamDay { get; set; }
-        public TimeSpan ExamTime { get; set; }
+        public string ExamDayString { get; set; }
+        public string ExamTimeString { get; set; }
         public bool Status { get; set; }
         public float Fee { get; set; }
         public DateTime CreatedAt { get; set; }

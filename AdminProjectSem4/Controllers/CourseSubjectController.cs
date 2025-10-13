@@ -18,11 +18,12 @@ namespace AdminProjectSem4.Controllers
         {
             client.BaseAddress = new Uri(uri);
             int pageSize = 6;
-
             var courseSubjectJson = await client.GetStringAsync("CourseSubjects");
             var courseSubjects = JsonConvert.DeserializeObject<List<CourseSubject>>(courseSubjectJson) ?? new List<CourseSubject>();
+
             var subjectsJson = await client.GetStringAsync("admin/Subjects");
             var subjects = JsonConvert.DeserializeObject<List<Subject>>(subjectsJson) ?? new List<Subject>();
+
             var coursesJson = await client.GetStringAsync("Courses");
             var courses = JsonConvert.DeserializeObject<List<Course>>(coursesJson) ?? new List<Course>();
 
@@ -31,6 +32,12 @@ namespace AdminProjectSem4.Controllers
                 cs.Subject = subjects.FirstOrDefault(s => s.SubjectId == cs.SubjectId);
                 cs.Course = courses.FirstOrDefault(c => c.CourseId == cs.CourseId);
             }
+
+            courseSubjects = courseSubjects
+                .Where(cs => cs.Course != null && cs.Subject != null
+                          && cs.Course.Status == true
+                          && cs.Subject.Status == true)
+                .ToList();
 
             var totalPage = (int)Math.Ceiling((double)courseSubjects.Count / pageSize);
             var pagedData = courseSubjects
@@ -44,6 +51,7 @@ namespace AdminProjectSem4.Controllers
 
             return View(pagedData);
         }
+
 
 
 
@@ -71,12 +79,12 @@ namespace AdminProjectSem4.Controllers
         {
             client.BaseAddress = new Uri(uri);
 
-            var courses = JsonConvert.DeserializeObject<List<Course>>(
+            var allCourses = JsonConvert.DeserializeObject<List<Course>>(
                 await client.GetStringAsync("Courses"));
-            Console.WriteLine(courses);
-            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+            var courses = allCourses.Where(c => c.Status == true).ToList();
+            var allSubject = JsonConvert.DeserializeObject<List<Subject>>(
                 await client.GetStringAsync("admin/Subjects"));
-
+            var subjects = allSubject.Where(c => c.Status == true).ToList();
             ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name");
             ViewBag.Course = new SelectList(courses, "CourseId", "Name");
             return View();
@@ -124,11 +132,12 @@ namespace AdminProjectSem4.Controllers
 
             var courseSubject = JsonConvert.DeserializeObject<CourseSubject>(await client.GetStringAsync("CourseSubjects/" + id));
 
-            var courses = JsonConvert.DeserializeObject<List<Course>>(
+            var allCourses = JsonConvert.DeserializeObject<List<Course>>(
                 await client.GetStringAsync("Courses"));
-
-            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+            var courses = allCourses.Where(c => c.Status == true).ToList();
+            var allSubject = JsonConvert.DeserializeObject<List<Subject>>(
                 await client.GetStringAsync("admin/Subjects"));
+            var subjects = allSubject.Where(c => c.Status == true).ToList();
 
             ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", courseSubject.SubjectId);
             ViewBag.Course = new SelectList(courses, "CourseId", "Name", courseSubject.CourseId);
@@ -163,10 +172,12 @@ namespace AdminProjectSem4.Controllers
             }
 
             // 🔹 Nếu lỗi, load lại danh sách để dropdown không bị rỗng
-            var courses = JsonConvert.DeserializeObject<List<Course>>(
+            var allCourses = JsonConvert.DeserializeObject<List<Course>>(
                 await client.GetStringAsync("Courses"));
-            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-                await client.GetStringAsync("admin/Subjects"));
+            var courses = allCourses.Where(c => c.Status == true).ToList();
+            var allSubject = JsonConvert.DeserializeObject<List<Subject>>(
+               await client.GetStringAsync("admin/Subjects"));
+            var subjects = allSubject.Where(c => c.Status == true).ToList();
 
             ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", courseSubject.SubjectId);
             ViewBag.Course = new SelectList(courses, "CourseId", "Name", courseSubject.CourseId);
@@ -183,27 +194,26 @@ namespace AdminProjectSem4.Controllers
         {
             client.BaseAddress = new Uri(uri);
 
-            // Lấy room theo id
-            var room = JsonConvert.DeserializeObject<CourseSubject>(
+            var courseSubject = JsonConvert.DeserializeObject<CourseSubject>(
                 await client.GetStringAsync($"CourseSubjects/{id}")
             );
 
-            if (room == null)
+            if (courseSubject == null)
             {
                 TempData["msg"] = "Course Subject not found!";
                 return RedirectToAction("Index");
             }
-            room.Status = fail;
+            courseSubject.Status = fail;
 
-            var response = await client.PutAsJsonAsync($"CourseSubjects/{id}", room);
+            var response = await client.PutAsJsonAsync($"CourseSubjects/{id}", courseSubject);
 
             if (response.IsSuccessStatusCode)
             {
-                TempData["msg"] = "CourseS ubject has been disabled successfully!";
+                TempData["msg"] = "courseSubject ubject has been disabled successfully!";
             }
             else
             {
-                TempData["msg"] = "Error when disabling room!";
+                TempData["msg"] = "Error when disabling courseSubject!";
             }
 
             return RedirectToAction("Index");
