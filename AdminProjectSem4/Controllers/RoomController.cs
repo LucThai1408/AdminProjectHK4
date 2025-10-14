@@ -48,7 +48,7 @@ namespace AdminProjectSem4.Controllers
 
 
         // GET: RoomControler/Details/5
-        public async Task<ActionResult> Details(int id)
+        public async Task<ActionResult> Detail(int id)
         {
             client.BaseAddress = new Uri(uri + id);
             var Room= JsonConvert.DeserializeObject<Room>(await client.GetStringAsync("Rooms/" + id));

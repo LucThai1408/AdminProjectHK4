@@ -24,8 +24,6 @@ namespace API.Models
         public ICollection<AccountExam> AccountExams { get; set; } = new HashSet<AccountExam>();
         [ForeignKey("AccountId")]
         public Account? Account { get; set; }
-        [ForeignKey("CourseSubjectId")]
-        public CourseSubject? CourseSubject { get; set; }
         [ForeignKey("RoomId")]
         public Room? Room { get; set; }
         public ICollection<Register> Registers { get; set; } = new HashSet<Register>();

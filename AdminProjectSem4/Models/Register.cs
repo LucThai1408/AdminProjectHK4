@@ -14,7 +14,7 @@ namespace API.Models
         [Required]
         public int ExamId { get; set; }
         [Required]
-        public int SubjectId { get; set; }
+        public int CourseSubjectId { get; set; }
         [Required]
         public string? Email { get; set; }
         public bool Status { get; set; } = true;
@@ -24,6 +24,8 @@ namespace API.Models
         public Account? Student { get; set; }
         [ForeignKey("ExamId")]
         public Exam? Exam { get; set; }
+        [ForeignKey("CourseSubjectId")]
+        public CourseSubject? CourseSubject { get; set; }
 
     }
 }

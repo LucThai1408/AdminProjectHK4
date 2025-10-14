@@ -1,25 +1,32 @@
-﻿@* @model IEnumerable<API.Models.Room> *@
-@model API.Models.Room
+﻿
+@model API.Models.CourseStudent
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detail";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Detailed class information</h1>
+<h1>Detailed course student information</h1>
 <div class="container">
     <div>
         <hr />
         <dl class="row">
             <dt class="col-sm-4">
-                @Html.DisplayNameFor(model => model.Name)
+                Course
             </dt>
             <dd class="col-sm-6 form-control">
-                @Html.DisplayFor(model => model.Name)
+                @Html.DisplayFor(model => model.Course.Name)
+            </dd>
+            <dt class="col-sm-4">
+                Student
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Student.FullName)
             </dd>
             <dt class="col-sm-4">
                 @Html.DisplayNameFor(model => model.Status)
             </dt>
+
             @if (Model.Status)
             {
                 <dd class="col-sm-6 form-control">

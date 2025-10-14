@@ -1,6 +1,7 @@
-﻿@model API.Models.Course
+﻿@model API.Models.CourseStudent
 
 @{
+    ViewData["Title"] = "Create";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -8,15 +9,19 @@
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <h3 class="text-center mb-4 fw-bold mt-4">Create a new course</h3>
+                <h3 class="text-center mb-4 fw-bold mt-4">Create a new course student</h3>
 
                 <form asp-action="Create" method="post">
-                    <div class="form-group mb-3">
-                        <label asp-for="Name" class="form-label fw-semibold">Course Name</label>
-                        <input asp-for="Name" class="form-control" placeholder="Enter course name..." />
-                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    <div class="form-group">
+                        <label asp-for="CourseId" class="control-label">Course</label>
+                        <select asp-for="CourseId" asp-items="@ViewBag.Course" class="form-control"></select>
+                        <span asp-validation-for="CourseId" class="text-danger"></span>
                     </div>
-
+                    <div class="form-group">
+                        <label asp-for="StudentId" class="control-label">Students</label>
+                        <select asp-for="StudentId" asp-items="@ViewBag.Student" class="form-control"></select>
+                        <span asp-validation-for="StudentId" class="text-danger"></span>
+                    </div>
                     <div class="form-check mb-4">
                         <input asp-for="Status" class="form-check-input" checked />
                         <label asp-for="Status" class="form-check-label">Active</label>

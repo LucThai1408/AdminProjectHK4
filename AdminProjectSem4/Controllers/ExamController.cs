@@ -1,11 +1,12 @@
-﻿//using API.Models;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.AspNetCore.Mvc.Rendering;
-//using Newtonsoft.Json;
-//using System;
-//using System.Security.Policy;
-//using System.Xml.Linq;
+﻿using API.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Security.Policy;
+using System.Xml.Linq;
 
 //namespace AdminProjectSem4.Controllers
 //{
@@ -14,46 +15,70 @@
 //        string uri = "https://localhost:44341/api/admin/";
 //        HttpClient client = new HttpClient();
 
-//        // GET: ExamController1
-//        public async Task<ActionResult> Index(string name = "", int currentPage = 1)
-//        {
-//            client.BaseAddress = new Uri(uri);
-//            int pageSize = 6;
-//            var ExamAll = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams"));
-//            var Exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?currentPage=" + currentPage));
-//            if (!name.Equals(""))
-//            {
-//                Exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?name=" + name));
-//                ExamAll = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?name=" + name));
-//            }
-//            else
-//            {
-//                Exams = JsonConvert.DeserializeObject<List<Exam>>(await client.GetStringAsync("Exams/?currentPage=" + currentPage));
-//            }
-//            ViewBag.TotalPage = ExamAll.Count() % pageSize == 0 ? ExamAll.Count() / pageSize : ExamAll.Count() / pageSize + 1;
-//            ViewBag.CurrentPage = currentPage;
-//            ViewBag.Name = name;
-//            return View(Exams);
-//        }
+        // GET: ExamController1
+        public bool fail { get; private set; }
+        public async Task<ActionResult> Index(string name = "", int currentPage = 1)
+        {
+            client.BaseAddress = new Uri(uri);
+            int pageSize = 6;
 
-//        // GET: ExamController1/Details/5
+            // Gọi API exams
+            string endpoint = string.IsNullOrEmpty(name)
+                ? $"Exams/?currentPage={currentPage}"
+                : $"Exams/?name={name}";
+            var json = await client.GetStringAsync(endpoint);
+            var data = JArray.Parse(json);
+
+            // Gọi thêm API accounts và rooms
+            var accountsJson = await client.GetStringAsync("Accounts");
+            var roomsJson = await client.GetStringAsync("Rooms");
+            var accounts = JsonConvert.DeserializeObject<List<Account>>(accountsJson) ?? new();
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(roomsJson) ?? new();
+
+            // Parse dữ liệu Exam
+            var exams = data.Select(x => new Exam
+            {
+                ExamId = (int)x["examId"],
+                Name = (string)x["name"],
+                AccountId = (int)x["accountId"],
+                RoomId = (int)x["roomId"],
+                ExamDay = DateTime.TryParse((string?)x["examDayString"], out var day) ? day : DateTime.MinValue,
+                ExamTime = TimeSpan.TryParse((string?)x["examTimeString"], out var time) ? time : TimeSpan.Zero,
+                Status = (bool)(x["status"] ?? true),
+                Fee = (float)(x["fee"] ?? 0),
+                CreatedAt = DateTime.TryParse((string?)x["createdAt"], out var created) ? created : DateTime.Now,
+                Account = accounts.FirstOrDefault(a => a.AccountId == (int)x["accountId"]),
+                Room = rooms.FirstOrDefault(r => r.RoomId == (int)x["roomId"])
+            }).ToList();
+
+           
+
+            // Phân trang
+            int totalPage = (int)Math.Ceiling((double)exams.Count / pageSize);
+            var pagedData = exams.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.TotalPage = totalPage;
+            ViewBag.CurrentPage = currentPage;
+            ViewBag.Name = name;
+
+            return View(pagedData);
+        }
+
+
+        // GET: ExamController1/Details/5
 
 //        public async Task<ActionResult> Detail(int id)
 //        {
 //            client.BaseAddress = new Uri(uri);
 
-//            var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
-//            var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                await client.GetStringAsync("Accounts"));
-//            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                await client.GetStringAsync("Subjects"));
-//            var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                await client.GetStringAsync("Rooms"));
+            var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
+            var accounts = JsonConvert.DeserializeObject<List<Account>>(
+                await client.GetStringAsync("Accounts"));
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                await client.GetStringAsync("Rooms"));
 
-//            // gán vào ViewBag, có chọn sẵn giá trị cũ
-//            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubject);
-//            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-//            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
 
 //            return View(exam);
 //        }
@@ -64,19 +89,20 @@
 //        {
 //            client.BaseAddress = new Uri(uri);
 
-//            var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                await client.GetStringAsync("Accounts"));
-//            Console.WriteLine(accounts);
-//            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                await client.GetStringAsync("Subjects"));
-//            var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                await client.GetStringAsync("Rooms"));
+            var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                await client.GetStringAsync("Accounts")) ?? new List<Account>();
+            var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
 
-//            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name");
-//            ViewBag.Room = new SelectList(rooms, "RoomId", "Name");
-//            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName");
-//            return View();
-//        }
+            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                await client.GetStringAsync("Subjects"));
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                await client.GetStringAsync("Rooms"));
+
+            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name");
+            ViewBag.Room = new SelectList(rooms, "RoomId", "Name");
+            ViewBag.Account = new SelectList(students, "AccountId", "FullName");
+            return View();
+        }
 
 //        // POST: ExamController1/Create
 //        [ValidateAntiForgeryToken]
@@ -85,76 +111,67 @@
 //        {
 //            bool isValid = true;
 
-//            if (string.IsNullOrWhiteSpace(exam.Name))
-//            {
-//                ViewBag.ErrorName = "Exam name cannot be empty!";
-//                isValid = false;
-//            }
-//            if (exam.CourseSubjectId <= 0)
-//            {
-//                ViewBag.ErrorSubject = "Subject is required!";
-//                isValid = false;
-//            }
-//            if (exam.RoomId <= 0)
-//            {
-//                ViewBag.ErrorRoom = "Room is required!";
-//                isValid = false;
-//            }
-//            if (exam.AccountId <= 0)
-//            {
-//                ViewBag.ErrorAccount = "Account is required!";
-//                isValid = false;
-//            }
-//            if (exam.ExamDay == default)
-//            {
-//                ViewBag.ErrorDay = "Exam day is required!";
-//                isValid = false;
-//            }
-//            if (exam.ExamTime == default)
-//            {
-//                ViewBag.ErrorTime = "Exam time is required!";
-//                isValid = false;
-//            }
-//            if (exam.Fee < 0)
-//            {
-//                ViewBag.ErrorFee = "Fee must be >= 0!";
-//                isValid = false;
-//            }
+            if (string.IsNullOrWhiteSpace(exam.Name))
+            {
+                ViewBag.ErrorName = "Exam name cannot be empty!";
+                isValid = false;
+            }
+            if (exam.RoomId <= 0)
+            {
+                ViewBag.ErrorRoom = "Room is required!";
+                isValid = false;
+            }
+            if (exam.AccountId <= 0)
+            {
+                ViewBag.ErrorAccount = "Account is required!";
+                isValid = false;
+            }
+            if (exam.ExamDay == default)
+            {
+                ViewBag.ErrorDay = "Exam day is required!";
+                isValid = false;
+            }
+            if (exam.ExamTime == default)
+            {
+                ViewBag.ErrorTime = "Exam time is required!";
+                isValid = false;
+            }
+            if (exam.Fee < 0)
+            {
+                ViewBag.ErrorFee = "Fee must be >= 0!";
+                isValid = false;
+            }
 
-//            // Nếu dữ liệu không hợp lệ → load lại dropdown và trả về View
-//            if (!isValid)
-//            {
-//                client.BaseAddress = new Uri(uri);
+            if (!isValid)
+            {
+                client.BaseAddress = new Uri(uri);
 
-//                var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                    await client.GetStringAsync("Accounts"));
-//                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                    await client.GetStringAsync("Subjects"));
-//                var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                    await client.GetStringAsync("Rooms"));
+                var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+              await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                    await client.GetStringAsync("Rooms"));
 
-//                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
-//                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-//                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
 //                return View(exam);
 //            }
 
-//            try
-//            {
-//                using (var client = new HttpClient())
-//                {
-//                    var json = JsonConvert.SerializeObject(new
-//                    {
-//                        name = exam.Name,
-//                        subjectId = exam.CourseSubjectId,
-//                        roomId = exam.RoomId,
-//                        accountId = exam.AccountId,
-//                        examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
-//                        examTime = exam.ExamTime.ToString(@"hh\:mm\:ss"),
-//                        status = exam.Status,
-//                        fee = exam.Fee
-//                    });
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(new
+                    {
+                        name = exam.Name,
+                        roomId = exam.RoomId,
+                        accountId = exam.AccountId,
+                        examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        examTime = exam.ExamTime.ToString(@"hh\:mm\:ss"),
+                        status = exam.Status,
+                        fee = exam.Fee
+                    });
 
 //                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
@@ -164,17 +181,17 @@
 //                    {
 //                        TempData["msg"] = "Create exam failed: " + await response.Content.ReadAsStringAsync();
 
-//                        // Khi API lỗi → load lại dropdown để form không trống
-//                        var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                            await this.client.GetStringAsync("Accounts"));
-//                        var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                            await this.client.GetStringAsync("Subjects"));
-//                        var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                            await this.client.GetStringAsync("Rooms"));
-
-//                        ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
-//                        ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-//                        ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                        // Khi API lỗi → load lại dropdown để form không trống
+                        var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                        await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                        var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
+                        var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                            await this.client.GetStringAsync("Subjects"));
+                        var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                            await this.client.GetStringAsync("Rooms"));
+                        ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name");
+                        ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                        ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
 //                        return View(exam);
 //                    }
@@ -186,16 +203,16 @@
 //            {
 //                TempData["msg"] = "Error: " + ex.Message;
 
-//                var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                    await client.GetStringAsync("Accounts"));
-//                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                    await client.GetStringAsync("Subjects"));
-//                var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                    await client.GetStringAsync("Rooms"));
+                var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                 await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
+                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                    await client.GetStringAsync("Subjects"));
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                    await client.GetStringAsync("Rooms"));
 
-//                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
-//                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-//                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
 //                return View(exam);
 //            }
@@ -211,17 +228,16 @@
 
 //            var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
 
-//            var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                await client.GetStringAsync("Accounts"));
+            var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                 await client.GetStringAsync("Accounts")) ?? new List<Account>();
+            var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
+            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
+                await client.GetStringAsync("Subjects"));
 
-//            var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                await client.GetStringAsync("Subjects"));
-
-//            var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                await client.GetStringAsync("Rooms"));
-//            ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
-//            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-//            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+            var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                await client.GetStringAsync("Rooms"));
+            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+            ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
 //            return View(exam);
 //        }
@@ -237,53 +253,49 @@
 //                return View(exam);
 //            }
 
-//            // validate cơ bản
-//            bool isValid = true;
-//            if (string.IsNullOrWhiteSpace(exam.Name))
-//            {
-//                ViewBag.ErrorName = "Exam name cannot be empty!";
-//                isValid = false;
-//            }
-//            if (exam.CourseSubjectId <= 0) { ViewBag.ErrorSubject = "Subject is required!"; isValid = false; }
-//            if (exam.RoomId <= 0) { ViewBag.ErrorRoom = "Room is required!"; isValid = false; }
-//            if (exam.AccountId <= 0) { ViewBag.ErrorAccount = "Account is required!"; isValid = false; }
-//            if (exam.ExamDay == default) { ViewBag.ErrorDay = "Exam day is required!"; isValid = false; }
-//            if (exam.ExamTime == default) { ViewBag.ErrorTime = "Exam time is required!"; isValid = false; }
-//            if (exam.Fee < 0) { ViewBag.ErrorFee = "Fee must be >= 0!"; isValid = false; }
+            // validate cơ bản
+            bool isValid = true;
+            if (string.IsNullOrWhiteSpace(exam.Name))
+            {
+                ViewBag.ErrorName = "Exam name cannot be empty!";
+                isValid = false;
+            }
+            if (exam.RoomId <= 0) { ViewBag.ErrorRoom = "Room is required!"; isValid = false; }
+            if (exam.AccountId <= 0) { ViewBag.ErrorAccount = "Account is required!"; isValid = false; }
+            if (exam.ExamDay == default) { ViewBag.ErrorDay = "Exam day is required!"; isValid = false; }
+            if (exam.ExamTime == default) { ViewBag.ErrorTime = "Exam time is required!"; isValid = false; }
+            if (exam.Fee < 0) { ViewBag.ErrorFee = "Fee must be >= 0!"; isValid = false; }
 
 //            if (!isValid)
 //            {
 //                client.BaseAddress = new Uri(uri);
 
-//                var accounts = JsonConvert.DeserializeObject<List<Account>>(
-//                    await client.GetStringAsync("Accounts"));
-//                var subjects = JsonConvert.DeserializeObject<List<Subject>>(
-//                    await client.GetStringAsync("Subjects"));
-//                var rooms = JsonConvert.DeserializeObject<List<Room>>(
-//                    await client.GetStringAsync("Rooms"));
+                var allStudent = JsonConvert.DeserializeObject<List<Account>>(
+                 await client.GetStringAsync("Accounts")) ?? new List<Account>();
+                var students = allStudent.Where(c => c.Status == true && c.Role == 2).ToList();
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(
+                    await client.GetStringAsync("Rooms"));
 
-//                ViewBag.Subject = new SelectList(subjects, "SubjectId", "Name", exam.CourseSubjectId);
-//                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-//                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(students, "AccountId", "FullName", exam.AccountId);
 
-//                return View(exam);
-//            }
-//            try
-//            {
-//                using (var client = new HttpClient())
-//                {
-//                    var json = JsonConvert.SerializeObject(new
-//                    {
-//                        examId = exam.ExamId,   // bắt buộc để API map đúng record
-//                        name = exam.Name,
-//                        subjectId = exam.CourseSubjectId,
-//                        roomId = exam.RoomId,
-//                        accountId = exam.AccountId,
-//                        examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
-//                        examTime = exam.ExamTime.ToString(@"hh\:mm\:ss"),
-//                        status = exam.Status,
-//                        fee = exam.Fee
-//                    });
+                return View(exam);
+            }
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    var json = JsonConvert.SerializeObject(new
+                    {
+                        examId = exam.ExamId,   // bắt buộc để API map đúng record
+                        name = exam.Name,
+                        roomId = exam.RoomId,
+                        accountId = exam.AccountId,
+                        examDay = exam.ExamDay.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        examTime = exam.ExamTime.ToString(@"hh\:mm\:ss"),
+                        status = exam.Status,
+                        fee = exam.Fee
+                    });
 
 //                    var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
@@ -308,25 +320,33 @@
 //        }
 
 
-//        // GET: ExamController1/Delete/5
-//        public ActionResult Delete(int id)
-//        {
-//            return View();
-//        }
+        // GET: ExamController1/Delete/5
+        public async Task<ActionResult> Delete(int id)
+        {
+            client.BaseAddress = new Uri(uri);
+            var exam = JsonConvert.DeserializeObject<Exam>(
+                await client.GetStringAsync($"Exams/{id}")
+            );
 
-//        // POST: ExamController1/Delete/5
-//        [HttpPost]
-//        [ValidateAntiForgeryToken]
-//        public ActionResult Delete(int id, IFormCollection collection)
-//        {
-//            try
-//            {
-//                return RedirectToAction(nameof(Index));
-//            }
-//            catch
-//            {
-//                return View();
-//            }
-//        }
-//    }
-//}
+            if (exam == null)
+            {
+                TempData["msg"] = "Exam not found!";
+                return RedirectToAction("Index");
+            }
+            exam.Status = fail;
+
+            var response = await client.PutAsJsonAsync($"Exams/{id}", exam);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["msg"] = "Exam ubject has been disabled successfully!";
+            }
+            else
+            {
+                TempData["msg"] = "Error when disabling exam!";
+            }
+
+            return RedirectToAction("Index");
+        }
+    }
+}

@@ -6,6 +6,7 @@ namespace API.Models
     [Table("AccountExams")]
     public class AccountExam
     {
+
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int AccountExamId { get; set; }
@@ -23,5 +24,8 @@ namespace API.Models
         public Exam? Exam { get; set; }
         [ForeignKey("StudentId")]
         public Account? Student { get; set; }
+        //ghi tạm vì a thiện lm thiếu
+        [ForeignKey("SubjectId")]
+        public Subject? Subject { get; set; }
     }
 }
