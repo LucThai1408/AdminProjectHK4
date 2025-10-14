@@ -46,7 +46,10 @@ namespace AdminProjectSem4.Controllers
                     .Take(pageSize)
                     .ToList();
 
-                // Tạo SelectList cho Role
+                // ✅ Thêm đường dẫn gốc của API
+                ViewBag.Url = "https://localhost:44341";
+
+                // Role list
                 ViewBag.RoleList = new SelectList(new[]
                 {
                     new { Value = "", Text = "-- Tất cả Role --" },
@@ -55,7 +58,7 @@ namespace AdminProjectSem4.Controllers
                     new { Value = "2", Text = "Giảng viên" }
                 }, "Value", "Text", role.HasValue ? role.Value.ToString() : "");
 
-                // Tạo SelectList cho Status
+                // Status list
                 ViewBag.StatusList = new SelectList(new[]
                 {
                     new { Value = "", Text = "-- Tất cả trạng thái --" },
@@ -63,7 +66,7 @@ namespace AdminProjectSem4.Controllers
                     new { Value = "false", Text = "Không hoạt động" }
                 }, "Value", "Text", string.IsNullOrEmpty(status) ? "" : status);
 
-                // Truyền thêm dữ liệu sang View
+                // Paging info
                 ViewBag.TotalPage = totalPage;
                 ViewBag.CurrentPage = currentPage;
                 ViewBag.Name = name;
@@ -88,6 +91,13 @@ namespace AdminProjectSem4.Controllers
             {
                 ViewBag.Url = "https://localhost:44341";
                 var account = JsonConvert.DeserializeObject<Account>(await client.GetStringAsync("accounts/" + id));
+                if (account != null && account.RoomId > 0)
+                {
+                    var roomJson = await client.GetStringAsync("rooms/" + account.RoomId);
+                    var room = JsonConvert.DeserializeObject<Room>(roomJson);
+                    account.Room = room; // Gán lại cho Account
+                }
+                ViewBag.Url = "https://localhost:44341";
                 return View(account);
             }
             catch (Exception ex)
@@ -99,22 +109,52 @@ namespace AdminProjectSem4.Controllers
 
         // GET: AccountsController/Create
         [Authorize(Roles = "1")]
-        public ActionResult Create()
+        public async Task<ActionResult> Create()
         {
-            return View();
+            try
+            {
+                var response = await client.GetAsync("Rooms");
+                List<Room> rooms = new();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonData = await response.Content.ReadAsStringAsync();
+                    rooms = JsonConvert.DeserializeObject<List<Room>>(jsonData) ?? new List<Room>();
+                }
+
+                // ✅ Nếu không có dữ liệu, tạo list trống để tránh NullReferenceException
+                ViewBag.RoomList = new SelectList(rooms, "RoomId", "Name");
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["msg"] = "Error: " + ex.Message;
+                ViewBag.RoomList = new SelectList(new List<Room>(), "RoomId", "Name");
+                return View();
+            }
         }
+
 
         // POST: AccountsController/Create
         [Authorize(Roles = "1")]
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "1")]
+        [HttpPost]
         public async Task<ActionResult> Create(Account account, IFormFile fileImage, string confirmPassword = "")
         {
             try
             {
                 bool check = true;
-                var accounts = JsonConvert.DeserializeObject<List<Account>>(await client.GetStringAsync("accounts/getAll"));
+                var accounts = JsonConvert.DeserializeObject<List<Account>>(await client.GetStringAsync("accounts"));
 
+                // ===== VALIDATION =====
+                if (string.IsNullOrWhiteSpace(account.FullName))
+                {
+                    ViewBag.ErrorFullName = "Account fullname cannot be empty!";
+                    check = false;
+                }
                 if (string.IsNullOrWhiteSpace(account.Name))
                 {
                     ViewBag.ErrorName = "Account name cannot be empty!";
@@ -123,6 +163,11 @@ namespace AdminProjectSem4.Controllers
                 if (string.IsNullOrWhiteSpace(account.Password))
                 {
                     ViewBag.ErrorPassword = "Password cannot be empty!";
+                    check = false;
+                }
+                if (account.DateOfBirth == null || account.DateOfBirth == default(DateTime))
+                {
+                    ViewBag.ErrorDateOfBirth = "Date of birth cannot be empty!";
                     check = false;
                 }
                 if (!string.IsNullOrEmpty(confirmPassword) && !string.IsNullOrEmpty(account.Password))
@@ -150,19 +195,27 @@ namespace AdminProjectSem4.Controllers
                     check = false;
                 }
 
+                // ===== Nếu validation lỗi thì load lại danh sách lớp học =====
                 if (!check)
                 {
+                    await LoadRoomList(); // ✅ Thêm dòng này
                     return View(account);
                 }
 
+                // ===== GỬI DỮ LIỆU LÊN API =====
                 var formData = new MultipartFormDataContent
-                {
-                    { new StringContent(account.Name), "name" },
-                    { new StringContent(account.Password), "password" },
-                    { new StringContent(account.Email), "email" },
-                    { new StringContent(account.Phone), "phone" },
-                    { new StringContent(account.Role.ToString()), "role" }
-                };
+        {
+            { new StringContent(account.Name ?? ""), "name" },
+            { new StringContent(account.FullName ?? ""), "fullName" },
+            { new StringContent(account.Password ?? ""), "password" },
+            { new StringContent(account.Email ?? ""), "email" },
+            { new StringContent(account.Phone ?? ""), "phone" },
+            { new StringContent(account.Role.ToString()), "role" },
+            { new StringContent(account.RoomId.ToString()), "roomId" },
+            { new StringContent(account.Address ?? ""), "address" },
+            { new StringContent(account.DateOfBirth.ToString("yyyy-MM-dd")), "dateOfBirth" },
+            { new StringContent(account.Status.ToString()), "status" }
+        };
 
                 if (fileImage != null && fileImage.Length > 0)
                 {
@@ -170,16 +223,43 @@ namespace AdminProjectSem4.Controllers
                 }
 
                 var response = await client.PostAsync("accounts", formData);
-                TempData["msg"] = await response.Content.ReadAsStringAsync();
+                var responseContent = await response.Content.ReadAsStringAsync();
 
-                return RedirectToAction("Index");
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["msg"] = "Account created successfully!";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "API Error: " + responseContent);
+                    await LoadRoomList(); // ✅ Load lại để dropdown không mất
+                    return View(account);
+                }
             }
             catch (Exception ex)
             {
-                TempData["msg"] = "Error: " + ex.Message;
+                ModelState.AddModelError("", "Error: " + ex.Message);
+                await LoadRoomList(); // ✅ Load lại danh sách khi có lỗi
                 return View(account);
             }
         }
+
+        // 🧩 Hàm phụ nạp danh sách lớp học
+        private async Task LoadRoomList()
+        {
+            var response = await client.GetAsync("Rooms");
+            List<Room> rooms = new();
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonData = await response.Content.ReadAsStringAsync();
+                rooms = JsonConvert.DeserializeObject<List<Room>>(jsonData) ?? new List<Room>();
+            }
+
+            ViewBag.RoomList = new SelectList(rooms, "RoomId", "Name");
+        }
+
 
         // GET: AccountsController/Edit/5
         [Authorize(Roles = "1")]
@@ -187,8 +267,30 @@ namespace AdminProjectSem4.Controllers
         {
             try
             {
-                var account = JsonConvert.DeserializeObject<Account>(await client.GetStringAsync("accounts/" + id));
-                ViewBag.Url = "https://localhost:44316";
+                var response = await client.GetAsync("Rooms");
+                List<Room> rooms = new();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonData = await response.Content.ReadAsStringAsync();
+                    rooms = JsonConvert.DeserializeObject<List<Room>>(jsonData) ?? new List<Room>();
+                }
+
+                // ✅ Lấy account cần sửa
+                var accountResponse = await client.GetAsync("accounts/" + id);
+                if (!accountResponse.IsSuccessStatusCode)
+                {
+                    TempData["msg"] = "Không tìm thấy tài khoản!";
+                    return RedirectToAction("Index");
+                }
+
+                var accountJson = await accountResponse.Content.ReadAsStringAsync();
+                var account = JsonConvert.DeserializeObject<Account>(accountJson);
+
+                // ✅ Gán danh sách phòng + phòng hiện tại được chọn
+                ViewBag.RoomList = new SelectList(rooms, "RoomId", "Name", account.RoomId);
+
+                ViewBag.Url = "https://localhost:44341";
                 return View(account);
             }
             catch (Exception ex)
@@ -198,26 +300,35 @@ namespace AdminProjectSem4.Controllers
             }
         }
 
+
+
         // POST: AccountsController/Edit/5
         [Authorize(Roles = "1")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(int id, Account account, IFormFile fileImage, string confirmPassword = "", string oldImage = "")
+        public async Task<ActionResult> Edit(int id, Account account, IFormFile fileImage, string oldImage = "")
         {
             try
             {
                 if (account.Phone == null) account.Phone = "";
 
+                using var client = new HttpClient();
                 var formData = new MultipartFormDataContent
-                {
-                    { new StringContent(account.AccountId.ToString()), "accountId" },
-                    { new StringContent(account.Name), "name" },
-                    { new StringContent(account.Password), "password" },
-                    { new StringContent(account.Email), "email" },
-                    { new StringContent(account.Phone), "phone" },
-                    { new StringContent(account.Role.ToString()), "role" }
-                };
+        {
+            { new StringContent(account.AccountId.ToString()), "accountId" },
+            { new StringContent(account.Name), "name" },
+            { new StringContent(account.FullName), "fullName" },
+            { new StringContent(account.RoomId.ToString()), "roomId" },
+            { new StringContent(account.Password), "password" },
+            { new StringContent(account.Address), "address" },
+            { new StringContent(account.Email), "email" },
+            { new StringContent(account.DateOfBirth.ToString("yyyy-MM-dd")), "dateOfBirth" },
+            { new StringContent(account.Status.ToString()), "status" },
+            { new StringContent(account.Phone), "phone" },
+            { new StringContent(account.Role.ToString()), "role" }
+        };
 
+                // File ảnh
                 if (fileImage != null && fileImage.Length > 0)
                 {
                     formData.Add(new StreamContent(fileImage.OpenReadStream()), "image", fileImage.FileName);
@@ -227,23 +338,25 @@ namespace AdminProjectSem4.Controllers
                     formData.Add(new StringContent(oldImage ?? ""), "oldImage");
                 }
 
-                var response = await client.PutAsync("accounts/" + id, formData);
-                TempData["msg"] = await response.Content.ReadAsStringAsync();
+                var response = await client.PutAsync("https://localhost:44341/api/admin/accounts/" + id, formData);
+                var responseContent = await response.Content.ReadAsStringAsync();
 
-                if (TempData["msg"].ToString().ToLower().Contains("warning"))
+                if (!response.IsSuccessStatusCode)
                 {
-                    ViewBag.Error = "Email already exists!";
+                    ViewBag.Error = responseContent;
                     return View(account);
                 }
 
+                TempData["msg"] = responseContent;
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                TempData["msg"] = "Error: " + ex.Message;
+                ViewBag.Error = "Error: " + ex.Message;
                 return View(account);
             }
         }
+
 
         // GET: AccountsController/Delete/5
         [Authorize(Roles = "1")]

@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Views\Accounts\" />
     <Folder Include="Views\Class\" />
     <Folder Include="Views\Exams\" />
     <Folder Include="Views\Subjects\" />

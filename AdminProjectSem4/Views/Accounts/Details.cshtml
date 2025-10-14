@@ -1,0 +1,104 @@
+﻿@model API.Models.Account
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Details Account</h1>
+<div class="container">
+
+
+    <div>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Name)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Name)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.FullName)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.FullName)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Room)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @(Model.Room != null ? Model.Room.Name : "N/A")
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Email)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Email)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Phone)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Phone)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.DateOfBirth)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.DateOfBirth)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Address)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Address)
+            </dd>
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Role)
+            </dt>
+            @if (Model.Role == 0)
+            {
+                <dd class="col-sm-6 form-control">
+                    Sinh viên
+                </dd>
+            }
+            else if (Model.Role == 1)
+            {
+                <dd class="col-sm-6 form-control">
+                    Admin
+                </dd>
+            }
+            else if (Model.Role == 2)
+            {
+                <dd class="col-sm-6 form-control">
+                    Giảng viên
+                </dd>
+            }
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Status)
+            </dt>
+            @if (Model.Status = true)
+            {
+                <dd class="col-sm-6 form-control">
+                    Active
+                </dd>
+            }
+            else if (Model.Status = false)
+            {
+                <dd class="col-sm-6 form-control">
+                    Deactive
+                </dd>
+            }
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Image)
+            </dt>
+            <dd class="col-sm-6">
+                <img src="@ViewBag.Url@Model.Image" width="100px" height="150px" />
+            </dd>
+        </dl>
+    </div>
+    <div>
+        <a asp-action="Index">Back to List</a>
+    </div>
+</div>

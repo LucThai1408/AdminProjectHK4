@@ -1,0 +1,199 @@
+﻿@model API.Models.Account
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var accountId = User.Claims.Skip(1).FirstOrDefault().Value as string;
+}
+
+<h1 class="mb-4 text-center">Edit Account</h1>
+
+<hr />
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            @if (accountId.Equals(Model.AccountId.ToString()))
+            {
+                <!-- ✅ FORM CHO CHÍNH CHỦ -->
+                <form asp-action="Edit" enctype="multipart/form-data" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="AccountId" />
+
+                    <div class="row">
+                        <!-- Cột 1 -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Name" class="control-label"></label>
+                                <input asp-for="Name" class="form-control" />
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="FullName" class="control-label"></label>
+                                <input asp-for="FullName" class="form-control" />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <input asp-for="Password" type="hidden" />
+                                <input type="hidden" name="confirmPassword" />
+                                <span class="text-danger">@ViewBag.ErrorConfirmPassword</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Email" class="control-label"></label>
+                                <input asp-for="Email" class="form-control" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Phone" class="control-label"></label>
+                                <input asp-for="Phone" class="form-control" />
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Image" class="control-label"></label>
+                                <input asp-for="Image" class="form-control" type="file" name="fileImage" />
+                                <input type="hidden" value="@Model.Image" name="oldImage" />
+                                <div class="mt-2">
+                                    <img src="@ViewBag.Url@Model.Image" width="120px" class="rounded shadow-sm" />
+                                </div>
+                                <span asp-validation-for="Image" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group mt-3">
+                                <input type="submit" value="Save" class="btn btn-primary" />
+                                <a asp-action="Index" class="btn btn-secondary ml-2">Back to List</a>
+                            </div>
+                        </div>
+
+                        <!-- Cột 2 -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="DateOfBirth" class="control-label"></label>
+                                <input asp-for="DateOfBirth" class="form-control" />
+                                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Address" class="control-label"></label>
+                                <input asp-for="Address" class="form-control" />
+                                <span asp-validation-for="Address" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Role" class="control-label"></label>
+                                <select asp-for="Role" class="form-control">
+                                    <option value="0" disabled>Sinh viên</option>
+                                    <option value="1">Admin</option>
+                                    <option value="2" disabled>Giàng viên</option>
+                                </select>
+                                <span asp-validation-for="Role" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Status" class="control-label"></label>
+                                <select asp-for="Status" class="form-control">
+                                    <option value="True">Active</option>
+                                    <option value="False" disabled>Deactive</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="RoomId" class="control-label"></label>
+                                <select asp-for="RoomId" asp-items="ViewBag.RoomList" class="form-control">
+                                </select>
+                                <span asp-validation-for="RoomId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <!-- ✅ FORM CHO ADMIN/SUPERUSER SỬA -->
+                <form asp-action="Edit" enctype="multipart/form-data" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="AccountId" />
+
+                    <div class="row">
+                        <!-- Cột 1 -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Name" class="control-label"></label>
+                                <span class="form-control">@Model.Name</span>
+                                <input asp-for="Name" type="hidden" />
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="FullName" class="control-label"></label>
+                                <span class="form-control">@Model.FullName</span>
+                                <input asp-for="FullName" type="hidden" />
+                            </div>
+                            <div class="form-group">
+                                <input asp-for="Password" type="hidden" value="@Model.Password" />
+                                <input name="confirmPassword" type="hidden" value="@Model.Password" />
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Email" class="control-label"></label>
+                                <span class="form-control">@Model.Email</span>
+                                <input asp-for="Email" type="hidden" />
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Phone" class="control-label"></label>
+                                <span class="form-control">@Model.Phone</span>
+                                <input asp-for="Phone" type="hidden" />
+                            </div>
+                            <div class="form-group">
+                                <input type="hidden" value="@Model.Image" name="oldImage" />
+                                <div class="mt-2">
+                                    <img src="@ViewBag.Url@Model.Image" width="100px" class="rounded shadow-sm" />
+                                </div>
+                            </div>
+                            <div class="form-group mt-3">
+                                <input type="submit" value="Save" class="btn btn-primary" />
+                                <a asp-action="Index" class="btn btn-secondary ml-2">Back to List</a>
+                            </div>
+                        </div>
+
+                        <!-- Cột 2 -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="DateOfBirth" class="control-label"></label>
+                                <span class="form-control">@Model.DateOfBirth</span>
+                                <input asp-for="DateOfBirth" type="hidden" />
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Address" class="control-label"></label>
+                                <span class="form-control">@Model.Address</span>
+                                <input asp-for="Address" type="hidden" />
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Role" class="control-label"></label>
+                                <select asp-for="Role" class="form-control">
+                                    <option value="0">Sinh viên</option>
+                                    <option value="1">Admin</option>
+                                    <option value="2">Giảng viên</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Status" class="control-label"></label>
+                                <select asp-for="Status" class="form-control">
+                                    <option value="True">Active</option>
+                                    <option value="False">Deactive</option>
+                                </select>
+                            </div>
+                            <!-- Room -->
+                            <div class="form-group">
+                                <label asp-for="RoomId" class="control-label"></label>
+                                <select asp-for="RoomId" asp-items="ViewBag.RoomList" class="form-control">
+                                </select>
+                                <span asp-validation-for="RoomId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
