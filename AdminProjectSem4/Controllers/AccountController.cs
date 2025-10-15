@@ -213,7 +213,7 @@ namespace AdminProjectSem4.Controllers
             { new StringContent(account.Role.ToString()), "role" },
             { new StringContent(account.RoomId.ToString()), "roomId" },
             { new StringContent(account.Address ?? ""), "address" },
-            { new StringContent(account.DateOfBirth.ToString("yyyy-MM-dd")), "dateOfBirth" },
+            { new StringContent(account.DateOfBirth?.ToString("yyyy-MM-dd") ?? ""), "dateOfBirth" },
             { new StringContent(account.Status.ToString()), "status" }
         };
 
@@ -311,22 +311,38 @@ namespace AdminProjectSem4.Controllers
             try
             {
                 if (account.Phone == null) account.Phone = "";
+                // 🔹 Lấy ID tài khoản hiện đang đăng nhập
+                var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
+                if (currentUserId != null && id.ToString() == currentUserId)
+                {
+                    // 🚫 Không cho vô hiệu hóa tài khoản đang đăng nhập
+                    TempData["msg"] = "❌ You cannot deactivate your own account!";
+                    return RedirectToAction("Index");
+                }
+
+                // 🚫 Không cho cập nhật Role nếu là tài khoản đang đăng nhập
+                var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                if (currentUserId != null && id.ToString() == currentUserId && account.Role.ToString() != currentRole)
+                {
+                    TempData["msg"] = "❌ You cannot change your own role while logged in!";
+                    return RedirectToAction("Index");
+                }
                 using var client = new HttpClient();
                 var formData = new MultipartFormDataContent
-        {
-            { new StringContent(account.AccountId.ToString()), "accountId" },
-            { new StringContent(account.Name), "name" },
-            { new StringContent(account.FullName), "fullName" },
-            { new StringContent(account.RoomId.ToString()), "roomId" },
-            { new StringContent(account.Password), "password" },
-            { new StringContent(account.Address), "address" },
-            { new StringContent(account.Email), "email" },
-            { new StringContent(account.DateOfBirth.ToString("yyyy-MM-dd")), "dateOfBirth" },
-            { new StringContent(account.Status.ToString()), "status" },
-            { new StringContent(account.Phone), "phone" },
-            { new StringContent(account.Role.ToString()), "role" }
-        };
+                {
+                    { new StringContent(account.AccountId.ToString()), "accountId" },
+                    { new StringContent(account.Name), "name" },
+                    { new StringContent(account.FullName), "fullName" },
+                    { new StringContent(account.RoomId.ToString()), "roomId" },
+                    { new StringContent(account.Password), "password" },
+                    { new StringContent(account.Address), "address" },
+                    { new StringContent(account.Email), "email" },
+                    { new StringContent(account.DateOfBirth?.ToString("yyyy-MM-dd") ?? ""), "dateOfBirth" },
+                    { new StringContent(account.Status.ToString()), "status" },
+                    { new StringContent(account.Phone), "phone" },
+                    { new StringContent(account.Role.ToString()), "role" }
+                };
 
                 // File ảnh
                 if (fileImage != null && fileImage.Length > 0)
@@ -347,7 +363,7 @@ namespace AdminProjectSem4.Controllers
                     return View(account);
                 }
 
-                TempData["msg"] = responseContent;
+                TempData["msg"] = "Account update successfully!";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)

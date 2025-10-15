@@ -10,13 +10,13 @@ namespace API.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int AccountExamId { get; set; }
-        public int SubjectId { get; set; }
+        public int CourseSubjectId { get; set; }
         [Required]
         public int ExamId { get; set; }
         [Required]
         public int StudentId { get; set; }
         public float Score { get; set; }
-        public int Record {  get; set; }
+        public int Record { get; set; }
 
         public bool IsPass { get; set; }
         public bool Status { get; set; } = true;
@@ -24,8 +24,7 @@ namespace API.Models
         public Exam? Exam { get; set; }
         [ForeignKey("StudentId")]
         public Account? Student { get; set; }
-        //ghi tạm vì a thiện lm thiếu
-        [ForeignKey("SubjectId")]
-        public Subject? Subject { get; set; }
+        [ForeignKey("CourseSubjectId")]
+        public CourseSubject? CourseSubject { get; set; }
     }
 }

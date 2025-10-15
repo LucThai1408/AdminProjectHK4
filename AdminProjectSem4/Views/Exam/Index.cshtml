@@ -1,169 +1,121 @@
-﻿@* 
-@model IEnumerable<API.Models.Exam>
+﻿@model IEnumerable<API.Models.Exam>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "List of Exams";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    var currentPage = ViewBag.CurrentPage;
-    var totalPage = ViewBag.TotalPage;
-    var name = ViewBag.Name as string;
+
+    var currentPage = ViewBag.CurrentPage ?? 1;
+    var totalPage = ViewBag.TotalPage ?? 1;
+    var name = (ViewBag.Name as string) ?? "";
     var userRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
 }
-
-<h1>LIST OF EXAM TESTS</h1>
-
-<div class="container">
-
-    @* <div class="btn-success text-center text-uppercase">@TempData["msg"]</div> *@
+<h1>List of Exam Tests</h1>
+<div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center">
-        @if (userRole == "1")
+          @if (userRole == "1")
         {
-            <p>
-                <a asp-action="Create" class="btn btn-primary">Create New</a>
-        </p>
+            <p><a asp-action="Create" class="btn btn-primary">Create New</a></p>
         }
     </div>
-    <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th class="col-1">
-                    @Html.DisplayNameFor(model => model.ExamId)
-                </th>
-                <th class="col-2">
-                    @Html.DisplayNameFor(model => model.Name)
-                </th>
-                 <th class="col-2">
-                    @Html.DisplayNameFor(model => model.ExamDay)
-                </th>
-                 <th class="col-2">
-                    @Html.DisplayNameFor(model => model.ExamTime)
-                </th>
-                <th class="col-2">
-                    @Html.DisplayNameFor(model => model.Status)
-                </th>
-                <th class="col-3">
-                    Action
-                </th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+
+    @* Hiển thị thông báo *@
+    @if (TempData["msg"] != null)
+    {
+        <div class="alert alert-success text-center text-uppercase fw-bold">
+            @TempData["msg"]
+        </div>
+    }
+
+    @if (Model.Any())
+    {
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table table-bordered table-hover">
                 <tr>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.ExamId)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Name)
-                    </td>
-                    <td>
-                        @item.ExamDay.ToString("dd/MM/yyyy")
-                    </td>
-                    <td>
-                        @item.ExamTime.ToString(@"hh\:mm")
-                    </td>
-                    @if (item.Status)
-                    {
-                        <td>Active</td>
-                    }
-                    else
-                    {
-                        <td>InActive</td>
-                    }
-                    <td>
-                        <a asp-action="Detail" asp-route-id="@item.ExamId" class="btn btn-info me-1 text-white">
-                            <i class="bi bi-info-circle"></i> Details
-                        </a>
-                        @if (userRole == "1")
-                        {
-                            <a asp-action="Edit" asp-route-id="@item.ExamId" class="btn btn-success me-1">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
-                            @if (item.Status) 
+                    <th>@Html.DisplayNameFor(m => m.First().ExamId)</th>
+                    <th>@Html.DisplayNameFor(m => m.First().Name)</th>
+                    <th>@Html.DisplayNameFor(m => m.First().ExamDay)</th>
+                    <th>@Html.DisplayNameFor(m => m.First().ExamTime)</th>
+                    <th>@Html.DisplayNameFor(m => m.First().Status)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ExamId</td>
+                        <td>@item.Name</td>
+                        <td>@item.ExamDay.ToString("dd/MM/yyyy")</td>
+                        <td>@item.ExamTime.ToString(@"hh\:mm")</td>
+                        <td>
+                            @if (item.Status)
                             {
-                                <form asp-action="Delete" asp-route-id="@item.ExamId" method="post" style="display:inline;">
-                                    <input type="hidden" name="id" value="@item.ExamId" />
-                                    <button type="submit" class="btn btn-danger"
-                                            onclick="return confirm('Do you sure wanna deactive this?')">
-                                        Deactive
-                                    </button>
-                                </form>
+                                <span class="badge bg-success">Active</span>
                             }
                             else
                             {
-                                <button class="btn btn-secondary" disabled>
-                                    Deactivated
-                                </button>
+                                <span class="badge bg-secondary">Inactive</span>
                             }
-                        }
-                    </td>
+                        </td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.ExamId" class="btn btn-info me-1 text-white">
+                                <i class="bi bi-info-circle"></i> Details
+                            </a>
+                            @if (userRole == "1")
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.ExamId" class="btn btn-success me-1">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </a>
+                                @if (item.Status)
+                                {
+                                    <form asp-action="Delete" asp-route-id="@item.ExamId" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@item.ExamId" />
+                                        <button type="submit" class="btn btn-danger"
+                                                onclick="return confirm('Do you sure wanna deactive this?')">
+                                            Deactive
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-secondary" disabled>
+                                        Deactivated
+                                    </button>
+                                }
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
 
-                </tr>
-            }
-        </tbody> 
-     </table> 
-    @if (Model.Count() != 0)
-    {
-        @if (name.Trim().Equals(""))
-        {
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <!-- Nút 'Trước' -->
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <a class="page-link" href="?currentPage=@(currentPage - 1)" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
+        @* ----- PHÂN TRANG ----- *@
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="?currentPage=@(currentPage - 1)@(string.IsNullOrEmpty(name) ? "" : $"&name={name}")">
+                        &laquo;
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= totalPage; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="?currentPage=@i@(string.IsNullOrEmpty(name) ? "" : $"&name={name}")">@i</a>
                     </li>
+                }
 
-                    <!-- Các số trang -->
-                    @for (int i = 1; i <= totalPage; i++)
-                    {
-                        <li class="page-item @(i == currentPage ? "active" : "")">
-                            <a class="page-link" href="?currentPage=@i">@i</a>
-                        </li>
-                    }
-
-                    <!-- Nút 'Tiếp theo' -->
-                    <li class="page-item @(currentPage == totalPage ? "disabled" : "")">
-                        <a class="page-link" href="?currentPage=@(currentPage + 1)" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
-        else
-        {
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <!-- Nút 'Trước' -->
-                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                        <a class="page-link" href="?currentPage=@(currentPage - 1)&name=@name" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-
-                    <!-- Các số trang -->
-                    @for (int i = 1; i <= totalPage; i++)
-                    {
-                        <li class="page-item @(i == currentPage ? "active" : "")">
-                            <a class="page-link" href="?currentPage=@i&name=@name">@i</a>
-                        </li>
-                    }
-
-                    <!-- Nút 'Tiếp theo' -->
-                    <li class="page-item @(currentPage == totalPage ? "disabled" : "")">
-                        <a class="page-link" href="?currentPage=@(currentPage + 1)&name=@name" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        }
+                <li class="page-item @(currentPage == totalPage ? "disabled" : "")">
+                    <a class="page-link" href="?currentPage=@(currentPage + 1)@(string.IsNullOrEmpty(name) ? "" : $"&name={name}")">
+                        &raquo;
+                    </a>
+                </li>
+            </ul>
+        </nav>
     }
     else
     {
-        <p class="text-center">No item!</p>
+        <p class="text-center text-muted mt-4">No exams found.</p>
     }
-
-</div> *@
+</div>

@@ -32,12 +32,6 @@ namespace API.Models
                 .WithMany(r => r.Exams)
                 .HasForeignKey(e => e.RoomId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // Exam - Subject
-            modelBuilder.Entity<Exam>()
-                .HasOne(e => e.CourseSubject)
-                .WithMany(s => s.Exams)
-                .OnDelete(DeleteBehavior.Restrict);
         }
         public DbSet<API.Models.Course> Course { get; set; } = default!;
         public DbSet<API.Models.CourseSubject> CourseSubject { get; set; } = default!;

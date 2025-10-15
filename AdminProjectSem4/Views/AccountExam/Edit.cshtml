@@ -18,12 +18,12 @@
 
                     <!-- 🔹 Subject -->
                     <div class="form-group">
-                        <label asp-for="SubjectId" class="control-label">Subject</label>
-                        <select asp-for="SubjectId" asp-items="@ViewBag.Subject" class="form-control" disabled></select>
+                        <label asp-for="CourseSubjectId" class="control-label">Subject</label>
+                        <select asp-for="CourseSubjectId" asp-items="@ViewBag.Subject" class="form-control" disabled></select>
 
                         <!-- Hidden để giữ giá trị khi select bị disabled -->
-                        <input type="hidden" name="SubjectId" value="@Model.SubjectId" />
-                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                        <input type="hidden" name="CourseSubjectId" value="@Model.CourseSubjectId" />
+                        <span asp-validation-for="CourseSubjectId" class="text-danger"></span>
                     </div>
 
                     <!-- 🔹 Exam -->
