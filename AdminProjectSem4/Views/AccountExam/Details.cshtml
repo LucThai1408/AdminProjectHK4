@@ -1,0 +1,89 @@
+﻿@model API.Models.AccountExamDto
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center mt-4 mb-4 fw-bold">Details Account Exam</h1>
+
+<div class="container">
+    <div>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.AccountExamId)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.AccountExamId)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.ExamName)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.ExamName)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.StudentName)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.StudentName)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Course)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Course)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Subject)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Subject)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Score)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Score)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.IsPass)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @(Model.IsPass ? "✅ Passed" : "❌ Failed")
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Record)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.Record)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.RoomName)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @Html.DisplayFor(model => model.RoomName)
+            </dd>
+
+            <dt class="col-sm-4">
+                @Html.DisplayNameFor(model => model.Status)
+            </dt>
+            <dd class="col-sm-6 form-control">
+                @(Model.Status ? "Active" : "Deactive")
+            </dd>
+        </dl>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>

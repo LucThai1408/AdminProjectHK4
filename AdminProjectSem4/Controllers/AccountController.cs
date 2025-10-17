@@ -42,6 +42,7 @@ namespace AdminProjectSem4.Controllers
                 int totalPage = (int)Math.Ceiling((double)allAccounts.Count / pageSize);
 
                 var accounts = allAccounts
+                    .OrderByDescending(a => a.AccountId)
                     .Skip((currentPage - 1) * pageSize)
                     .Take(pageSize)
                     .ToList();

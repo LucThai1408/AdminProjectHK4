@@ -48,6 +48,7 @@ namespace AdminProjectSem4.Controllers
             }
             var totalPage = (int)Math.Ceiling((double)CourseStudents.Count / pageSize);
             var pagedData = CourseStudents
+                .OrderByDescending(cs => cs.CourseStudentId)
                 .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();

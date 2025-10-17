@@ -41,6 +41,7 @@ namespace AdminProjectSem4.Controllers
 
             var totalPage = (int)Math.Ceiling((double)courseSubjects.Count / pageSize);
             var pagedData = courseSubjects
+                .OrderByDescending(cs => cs.CourseSubjectId)
                 .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();

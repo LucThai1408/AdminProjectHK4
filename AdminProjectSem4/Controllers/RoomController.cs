@@ -34,6 +34,7 @@ namespace AdminProjectSem4.Controllers
             var totalPage = (int)Math.Ceiling((double)allRooms.Count / pageSize);
 
             var rooms = allRooms
+                .OrderByDescending(r => r.RoomId)
                 .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();

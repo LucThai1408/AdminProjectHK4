@@ -1,0 +1,60 @@
+﻿@model API.Models.RegisterDto
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center mt-4 mb-4 fw-bold">Details Register</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <dl>
+                <dt>@Html.DisplayNameFor(model => model.RegisterId)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.RegisterId)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.StudentId)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.StudentId)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.StudentName)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.StudentName)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.Email)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.Email)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.ExamId)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.ExamId)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.ExamName)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.ExamName)</dd>
+            </dl>
+        </div>
+
+        <div class="col-md-6">
+            <dl>
+                <dt>@Html.DisplayNameFor(model => model.SubjectId)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.SubjectId)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.ExamFee)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.ExamFee)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.RoomName)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.RoomName)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.Payment)</dt>
+                <dd class="form-control">@Html.DisplayFor(model => model.Payment)</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.Status)</dt>
+                <dd class="form-control">@(Model.Status ? "Active" : "Deactive")</dd>
+
+                <dt>@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+                <dd class="form-control">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>

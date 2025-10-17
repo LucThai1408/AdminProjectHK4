@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace AdminProjectSem4.Controllers
 {
+    [Authorize]
     public class ExamController : Controller
     {
         private readonly string uri = "https://localhost:44341/api/admin/";
@@ -57,7 +58,9 @@ namespace AdminProjectSem4.Controllers
 
             // Phân trang
             int totalPage = (int)Math.Ceiling((double)exams.Count / pageSize);
-            var pagedData = exams.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+            var pagedData = exams
+                .OrderByDescending(e => e.ExamId)
+                .Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
             ViewBag.TotalPage = totalPage;
             ViewBag.CurrentPage = currentPage;
@@ -70,19 +73,33 @@ namespace AdminProjectSem4.Controllers
         [HttpGet]
         public async Task<ActionResult> Details(int id)
         {
-            client.BaseAddress = new Uri(uri);
+            try
+            {
+                // ✅ Gọi API đầy đủ đường dẫn
+                var examJson = await client.GetStringAsync($"{uri}Exams/{id}");
+                var exam = JsonConvert.DeserializeObject<Exam>(examJson);
 
-            var exam = JsonConvert.DeserializeObject<Exam>(await client.GetStringAsync("Exams/" + id));
-            var accounts = JsonConvert.DeserializeObject<List<Account>>(await client.GetStringAsync("Accounts"));
-            var rooms = JsonConvert.DeserializeObject<List<Room>>(await client.GetStringAsync("Rooms"));
+                var accountsJson = await client.GetStringAsync($"{uri}Accounts");
+                var accounts = JsonConvert.DeserializeObject<List<Account>>(accountsJson) ?? new List<Account>();
 
-            ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
-            ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+                var roomsJson = await client.GetStringAsync($"{uri}Rooms");
+                var rooms = JsonConvert.DeserializeObject<List<Room>>(roomsJson) ?? new List<Room>();
 
-            return View(exam);
+                // ✅ Truyền danh sách xuống View
+                ViewBag.Room = new SelectList(rooms, "RoomId", "Name", exam.RoomId);
+                ViewBag.Account = new SelectList(accounts, "AccountId", "FullName", exam.AccountId);
+
+                return View(exam);
+            }
+            catch (Exception ex)
+            {
+                TempData["msg"] = "Error: " + ex.Message;
+                return RedirectToAction("Index");
+            }
         }
 
         // =================== CREATE (GET) ===================
+        [Authorize(Roles = "1")]
         [HttpGet]
         public async Task<ActionResult> Create()
         {
@@ -101,6 +118,7 @@ namespace AdminProjectSem4.Controllers
         }
 
         // =================== CREATE (POST) ===================
+        [Authorize(Roles = "1")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(Exam exam)
@@ -182,6 +200,7 @@ namespace AdminProjectSem4.Controllers
 
 
         // =================== EDIT (GET) ===================
+        [Authorize(Roles = "1")]
         [HttpGet]
         public async Task<ActionResult> Edit(int id)
         {
@@ -192,6 +211,7 @@ namespace AdminProjectSem4.Controllers
         }
 
         // =================== EDIT (POST) ===================
+        [Authorize(Roles = "1")]
         [HttpPost]
         public async Task<ActionResult> Edit(int id, Exam exam)
         {
@@ -252,6 +272,7 @@ namespace AdminProjectSem4.Controllers
 
         // =================== DELETE ===================
         // POST: RoomControler/Delete/5
+        [Authorize(Roles = "1")]
         [HttpPost]
         [Authorize(Roles = "1")]
         [ValidateAntiForgeryToken]
